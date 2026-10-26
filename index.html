@@ -3,449 +3,68 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>ระบบส่งงาน</title>
+<title>ห้องเรียนชีววิทยา</title>
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
   :root{
     --bg:#f3f6f4; --card:#fff; --ink:#1d2a23; --muted:#6a756f; --line:#dde4e0;
     --brand:#1e7a52; --brand-dark:#155c3d; --brand-soft:#e2f2ea;
-    --red:#b3261e; --red-soft:#fce8e6; --orange:#a35c00; --orange-soft:#fff1dc;
   }
   *{box-sizing:border-box}
   body{margin:0;font-family:'Sarabun',system-ui,sans-serif;background:var(--bg);color:var(--ink);font-size:16px;line-height:1.5}
   .wrap{max-width:720px;margin:0 auto;padding:0 16px}
-  header{background:var(--brand);color:#fff;padding:18px 0 16px}
-  header h1{margin:0;font-size:22px}
-  .who{margin-top:4px;font-size:15px;opacity:.95;display:flex;flex-wrap:wrap;gap:8px;align-items:center}
-  main{padding:20px 0 60px}
-  h2{font-size:19px;margin:4px 0 14px}
-  .hidden{display:none!important}
-  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:12px}
-  .tile{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:22px 8px;font:inherit;font-size:20px;font-weight:700;color:var(--brand-dark);cursor:pointer}
-  .tile:active,.row:active{transform:scale(.98)}
-  input[type=search]{width:100%;padding:12px 14px;font:inherit;border:1px solid var(--line);border-radius:12px;margin-bottom:12px;background:#fff}
-  .list{display:flex;flex-direction:column;gap:6px}
-  .row{display:flex;align-items:center;gap:12px;text-align:left;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px;font:inherit;cursor:pointer;color:var(--ink)}
-  .no{min-width:32px;height:32px;border-radius:50%;background:var(--brand-soft);color:var(--brand-dark);display:grid;place-items:center;font-weight:700;font-size:14px}
-  .link{background:none;border:0;color:var(--brand);font:inherit;padding:0;cursor:pointer;text-decoration:underline}
-  .link.light{color:#fff;font-size:14px}
-  .tabs{display:flex;gap:8px;margin-bottom:14px}
-  .tab{flex:1;padding:10px;border-radius:12px;border:1px solid var(--line);background:#fff;font:inherit;font-weight:600;cursor:pointer;color:var(--muted)}
-  .tab.on{background:var(--brand);border-color:var(--brand);color:#fff}
-  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:12px}
-  .card-top{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:14px;color:var(--muted)}
-  .card h3{margin:6px 0 4px;font-size:18px}
-  .desc{margin:4px 0 8px;white-space:pre-wrap;color:#33413a}
-  .due{margin:0 0 10px;font-size:14px;color:var(--muted)}
-  .badge{font-size:13px;font-weight:700;padding:2px 10px;border-radius:999px;white-space:nowrap}
-  .b-red{background:var(--red-soft);color:var(--red)}
-  .b-orange{background:var(--orange-soft);color:var(--orange)}
-  .b-green{background:var(--brand-soft);color:var(--brand-dark)}
-  .sent{background:#f7faf8;border-radius:10px;padding:10px 12px;font-size:14px;margin-bottom:10px}
-  .sent ul{margin:4px 0 0;padding-left:20px}
-  .btn{width:100%;padding:12px;border:0;border-radius:12px;background:var(--brand);color:#fff;font:inherit;font-weight:700;cursor:pointer}
-  .btn.ghost{background:#fff;color:var(--brand-dark);border:1px solid var(--brand)}
-  .btn:disabled{opacity:.6;cursor:wait}
-  .empty{text-align:center;color:var(--muted);padding:40px 0}
-  .muted{color:var(--muted)}
-  .banner{background:var(--red-soft);color:var(--red);padding:10px 14px;border-radius:12px;margin-bottom:14px}
-  #loading{position:fixed;inset:0;background:rgba(243,246,244,.7);display:grid;place-items:center;font-weight:600;color:var(--brand-dark);z-index:20}
-  .modal{position:fixed;inset:0;background:rgba(0,0,0,.4);display:flex;align-items:flex-end;justify-content:center;z-index:10}
-  .sheet{background:#fff;width:100%;max-width:560px;border-radius:18px 18px 0 0;padding:20px 16px 24px;max-height:90vh;overflow:auto}
-  @media(min-width:600px){.modal{align-items:center}.sheet{border-radius:18px}}
-  .sheet h3{margin:0 0 4px}
-  .drop{display:block;border:2px dashed var(--brand);border-radius:14px;padding:22px 12px;text-align:center;color:var(--brand-dark);font-weight:600;margin:14px 0;cursor:pointer;background:var(--brand-soft)}
-  .drop input{display:none}
-  #fileList{list-style:none;padding:0;margin:0 0 10px}
-  #fileList li{display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid var(--line);font-size:14px;word-break:break-all}
-  #fileList button{background:none;border:0;color:var(--red);font:inherit;cursor:pointer;white-space:nowrap}
-  #mMsg{min-height:22px;font-size:14px;margin-bottom:10px}
-  #mMsg.err{color:var(--red)}
-  .actions{display:flex;gap:10px}
-  .pin{width:100%;padding:14px;font:inherit;font-size:20px;letter-spacing:4px;text-align:center;border:1px solid var(--line);border-radius:12px;margin-bottom:10px;background:#fff}
-  .pin:focus{outline:2px solid var(--brand);border-color:transparent}
-  #pinMsg{min-height:22px;font-size:14px;color:var(--red);margin-bottom:10px}
-  #quizBox{margin:14px 0 6px}
-  .q{margin-bottom:16px}
-  .q label{display:block;font-weight:600;margin-bottom:6px;white-space:pre-wrap}
-  .q textarea{width:100%;min-height:90px;padding:10px 12px;font:inherit;border:1px solid var(--line);border-radius:12px;resize:vertical}
-  .q textarea:focus{outline:2px solid var(--brand);border-color:transparent}
-  .type{font-size:12px;font-weight:700;background:var(--brand-soft);color:var(--brand-dark);padding:1px 8px;border-radius:999px;margin-right:6px}
-  .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:12px 18px;border-radius:12px;font-size:15px;z-index:30;max-width:90vw;text-align:center}
+  header{background:var(--brand);color:#fff;padding:28px 0 24px}
+  header h1{margin:0;font-size:26px}
+  header p{margin:4px 0 0;opacity:.9}
+  main{padding:24px 0 60px}
+  .menu{display:grid;gap:14px}
+  .item{display:flex;align-items:center;gap:16px;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;text-decoration:none;color:var(--ink);transition:transform .1s,box-shadow .15s}
+  a.item:hover{box-shadow:0 4px 14px rgba(30,122,82,.12)}
+  a.item:active{transform:scale(.98)}
+  .icon{flex:none;width:56px;height:56px;border-radius:14px;background:var(--brand-soft);display:grid;place-items:center;font-size:28px}
+  .text h2{margin:0;font-size:19px}
+  .text p{margin:2px 0 0;color:var(--muted);font-size:14px}
+  .arrow{margin-left:auto;color:var(--brand);font-size:22px;font-weight:700}
+  .item.soon{opacity:.55;cursor:default}
+  .tag{margin-left:auto;font-size:12px;font-weight:700;background:#eceff1;color:var(--muted);padding:2px 10px;border-radius:999px;white-space:nowrap}
+  footer{text-align:center;color:var(--muted);font-size:13px;padding:0 0 30px}
 </style>
 </head>
 <body>
 <header>
   <div class="wrap">
-    <h1>ระบบส่งงาน</h1>
-    <div id="who" class="who"></div>
+    <h1>ห้องเรียนชีววิทยา</h1>
+    <p>ม.4 · ภาคเรียนที่ 2/2569</p>
   </div>
 </header>
 
 <main class="wrap">
-  <div id="banner" class="banner hidden"></div>
-
-  <section id="step-room" class="hidden">
-    <h2>เลือกห้องเรียน</h2>
-    <div id="rooms" class="grid"></div>
-  </section>
-
-  <section id="step-name" class="hidden">
-    <button class="link" onclick="showRooms()">← เปลี่ยนห้อง</button>
-    <h2>เลือกชื่อของตัวเอง <span id="roomLabel" class="muted"></span></h2>
-    <input id="search" type="search" placeholder="ค้นหาชื่อหรือเลขที่" oninput="renderStudents()">
-    <div id="students" class="list"></div>
-  </section>
-
-  <section id="step-pin" class="hidden">
-    <button class="link" onclick="logout()">← เลือกชื่อใหม่</button>
-    <h2 id="pinTitle"></h2>
-    <p id="pinHelp" class="muted"></p>
-    <input id="pin1" class="pin" type="password" inputmode="numeric" autocomplete="off" placeholder="เลขประจำตัวนักเรียน" onkeydown="if(event.key==='Enter')doLogin()">
-    <input id="pin2" class="pin hidden" type="password" inputmode="numeric" autocomplete="off" placeholder="กรอกเลขประจำตัวอีกครั้ง" onkeydown="if(event.key==='Enter')doLogin()">
-    <div id="pinMsg"></div>
-    <button id="pinBtn" class="btn" onclick="doLogin()">เข้าสู่ระบบ</button>
-  </section>
-
-  <section id="step-tasks" class="hidden">
-    <div class="tabs">
-      <button id="tabPending" class="tab on" onclick="setTab('pending')">งานค้าง</button>
-      <button id="tabDone" class="tab" onclick="setTab('done')">ส่งแล้ว</button>
-    </div>
-    <div id="tasks"></div>
-  </section>
+  <nav id="menu" class="menu"></nav>
 </main>
-
-<div id="modal" class="modal hidden" onclick="if(event.target===this && state.task.type!=='quiz')closeUpload()">
-  <div class="sheet">
-    <h3 id="mTitle"></h3>
-    <div id="mInfo" class="muted"></div>
-    <div id="fileBox">
-      <label class="drop">
-        <input id="fileInput" type="file" multiple onchange="addFiles(this.files)">
-        📎 แตะเพื่อเลือกไฟล์ (เลือกได้หลายไฟล์)
-      </label>
-      <ul id="fileList"></ul>
-    </div>
-    <div id="quizBox"></div>
-    <div id="mMsg"></div>
-    <div class="actions">
-      <button class="btn ghost" onclick="closeUpload()">ยกเลิก</button>
-      <button id="sendBtn" class="btn" onclick="send()">ส่งงาน</button>
-    </div>
-  </div>
-</div>
-
-<div id="loading">กำลังโหลด…</div>
+<footer>โรงเรียนนางรอง</footer>
 
 <script>
-/* ===== ตั้งค่า: วางลิงก์เว็บแอป Apps Script (ลงท้ายด้วย /exec) ===== */
-const API_URL = 'https://script.google.com/macros/s/AKfycbyUQgxH-BuTdGgvFoAwTAi_WOscO2Is8jA-NqBnfAFLG9azL1TEAowyZj9axUX7t6lo/exec';
+/* ===== เมนู: เพิ่ม/แก้ไขที่นี่ =====
+   ready: true  = เปิดใช้งาน (กดเข้าได้)
+   ready: false = ขึ้นว่า "เร็ว ๆ นี้"
+   href ที่ขึ้นต้นด้วย https:// (เช่นลิงก์ Drive) จะเปิดในแท็บใหม่      */
+const MENU = [
+  { icon: '📚', title: 'เอกสารประกอบการเรียน', desc: 'ใบความรู้ สไลด์ และคลิปประกอบบทเรียน',
+    href: 'https://drive.google.com/drive/folders/1R1bPkcombRQYffNQXrdRec1xtFyFqQGI?usp=drive_link', ready: true },
+  { icon: '📤', title: 'ระบบส่งงาน',          desc: 'ส่งงาน ตอบคำถามท้ายคาบ ดูงานค้าง',  href: 'submit/', ready: true  },
+  { icon: '📝', title: 'ระบบสอบ',             desc: 'ทำแบบทดสอบออนไลน์',                  href: 'exam/',   ready: false },
+];
 
-const MAX_MB = 20;
-const state = { rooms: [], room: null, students: [], student: null, tasks: [], tab: 'pending', task: null, files: [], busy: false };
-
-const $ = id => document.getElementById(id);
-const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const roomName = r => 'ม.' + String(r).replace('-', '/');
-const errText = e => String((e && e.message) || e).replace(/^(Exception|Error):\s*/, '').replace('AUTH:', '');
-const isAuth = e => String((e && e.message) || e).includes('AUTH:');
-
-// เรียก Apps Script ผ่าน fetch (ส่งแบบ text/plain เพื่อเลี่ยงปัญหา CORS)
-async function run(action, ...args) {
-  let res;
-  try {
-    res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action, args }) });
-  } catch (e) {
-    throw new Error('เชื่อมต่อเซิร์ฟเวอร์ไม่ได้ ตรวจสอบอินเทอร์เน็ตแล้วลองใหม่');
-  }
-  const out = await res.json().catch(() => null);
-  if (!out) throw new Error('เซิร์ฟเวอร์ตอบกลับผิดรูปแบบ (ตรวจสอบ API_URL และสิทธิ์ "ทุกคน")');
-  if (!out.ok) throw new Error(out.error);
-  return out.data;
-}
-function store(k, v) { try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, v); } catch (e) {} }
-function load(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
-function loading(on) { $('loading').classList.toggle('hidden', !on); }
-function show(id) { ['step-room','step-name','step-pin','step-tasks'].forEach(s => $(s).classList.toggle('hidden', s !== id)); }
-function banner(e) { const b = $('banner'); if (!e) return b.classList.add('hidden'); b.textContent = errText(e); b.classList.remove('hidden'); }
-function toast(t) { const d = document.createElement('div'); d.className = 'toast'; d.textContent = t; document.body.appendChild(d); setTimeout(() => d.remove(), 4000); }
-
-async function init() {
-  loading(true);
-  try {
-    state.rooms = await run('getRooms');
-    const r = load('room');
-    if (r && state.rooms.includes(r)) await pickRoom(r, load('no'));
-    else showRooms();
-  } catch (e) { banner(e); }
-  loading(false);
-}
-
-function showRooms() {
-  banner(null);
-  $('who').innerHTML = '';
-  $('rooms').innerHTML = state.rooms.map(r =>
-    `<button class="tile" onclick="pickRoom('${esc(r)}')">${esc(roomName(r))}</button>`).join('')
-    || '<p class="muted">ยังไม่มีห้องในระบบ</p>';
-  show('step-room');
-}
-
-async function pickRoom(room, autoNo) {
-  loading(true); banner(null);
-  try {
-    state.room = room;
-    state.students = await run('getStudents', room);
-    store('room', room);
-    $('roomLabel').textContent = roomName(room);
-    const s = autoNo && state.students.find(x => String(x.no) === String(autoNo));
-    if (s) { await pickStudent(s.no); }
-    else { $('search').value = ''; renderStudents(); show('step-name'); }
-  } catch (e) { banner(e); }
-  loading(false);
-}
-
-function renderStudents() {
-  const q = $('search').value.trim();
-  $('students').innerHTML = state.students
-    .filter(s => !q || s.name.includes(q) || String(s.no) === q)
-    .map(s => `<button class="row" onclick="pickStudent('${esc(s.no)}')"><span class="no">${esc(s.no)}</span>${esc(s.name)}</button>`)
-    .join('') || '<p class="muted">ไม่พบชื่อ</p>';
-}
-
-async function pickStudent(no) {
-  state.student = state.students.find(s => String(s.no) === String(no));
-  state.pin = (load('no') === String(no) && load('pin')) || null;
-  if (state.pin) await enterTasks();
-  else await showPin();
-}
-
-async function showPin() {
-  loading(true); banner(null);
-  try {
-    const st = await run('getAuthState', state.room, state.student.no);
-    state.firstTime = !st.registered;
-    $('pinTitle').textContent = `${state.student.name} · เลขที่ ${state.student.no}`;
-    $('pinHelp').textContent = state.firstTime
-      ? 'เข้าใช้ครั้งแรก: กรอกเลขประจำตัวนักเรียน 2 ครั้ง เลขนี้จะใช้ยืนยันตัวตนทุกครั้งต่อไป'
-      : 'กรอกเลขประจำตัวนักเรียนเพื่อยืนยันตัวตน';
-    $('pin1').value = ''; $('pin2').value = '';
-    $('pin2').classList.toggle('hidden', !state.firstTime);
-    $('pinBtn').textContent = state.firstTime ? 'ลงทะเบียนและเข้าสู่ระบบ' : 'เข้าสู่ระบบ';
-    $('pinMsg').textContent = '';
-    $('who').innerHTML = '';
-    show('step-pin');
-    setTimeout(() => $('pin1').focus(), 50);
-  } catch (e) { banner(e); }
-  loading(false);
-}
-
-async function doLogin() {
-  const p1 = $('pin1').value.replace(/\s/g, ''), p2 = $('pin2').value.replace(/\s/g, '');
-  if (!/^\d{4,10}$/.test(p1)) return ($('pinMsg').textContent = 'เลขประจำตัวต้องเป็นตัวเลข 4–10 หลัก');
-  if (state.firstTime && p1 !== p2) return ($('pinMsg').textContent = 'เลขทั้งสองช่องไม่ตรงกัน');
-  $('pinBtn').disabled = true; $('pinMsg').textContent = '';
-  loading(true);
-  try {
-    await run('login', state.room, state.student.no, p1);
-    state.pin = p1;
-    store('no', state.student.no); store('pin', p1);
-    loading(false);
-    await enterTasks();
-  } catch (e) {
-    loading(false);
-    $('pinMsg').textContent = errText(e);
-  } finally { $('pinBtn').disabled = false; }
-}
-
-async function enterTasks() {
-  $('who').innerHTML = `<span>${esc(state.student.name)} · ${esc(roomName(state.room))} เลขที่ ${esc(state.student.no)}</span>
-    <button class="link light" onclick="logout()">ออกจากระบบ</button>`;
-  state.tab = 'pending';
-  show('step-tasks');
-  await loadTasks();
-}
-
-function authFail() {
-  store('pin', null); state.pin = null; state.busy = false;
-  $('modal').classList.add('hidden');
-  showPin();
-}
-
-function logout() {
-  store('no', null); store('pin', null);
-  state.student = null; state.pin = null;
-  $('who').innerHTML = '';
-  $('search').value = '';
-  renderStudents();
-  show('step-name');
-}
-
-async function loadTasks() {
-  loading(true);
-  try { state.tasks = await run('getTasks', state.room, state.student.no, state.pin); renderTasks(); }
-  catch (e) { loading(false); if (isAuth(e)) return authFail(); banner(e); }
-  loading(false);
-}
-
-function setTab(t) { state.tab = t; renderTasks(); }
-
-function renderTasks() {
-  const pending = state.tasks.filter(t => !t.submitted);
-  const done = state.tasks.filter(t => t.submitted);
-  $('tabPending').textContent = `งานค้าง (${pending.length})`;
-  $('tabDone').textContent = `ส่งแล้ว (${done.length})`;
-  $('tabPending').classList.toggle('on', state.tab === 'pending');
-  $('tabDone').classList.toggle('on', state.tab === 'done');
-  const list = state.tab === 'pending' ? pending : done;
-  $('tasks').innerHTML = list.length ? list.map(card).join('')
-    : `<div class="empty">${state.tab === 'pending' ? '🎉 ไม่มีงานค้าง' : 'ยังไม่มีงานที่ส่ง'}</div>`;
-}
-
-function card(t) {
-  let badge = '';
-  if (!t.submitted) badge = t.overdue ? '<span class="badge b-red">เลยกำหนด</span>' : '';
-  else badge = t.status === 'ส่งช้า' ? '<span class="badge b-orange">ส่งช้า</span>' : '<span class="badge b-green">ส่งแล้ว</span>';
-  const quiz = t.type === 'quiz';
-  const files = quiz ? '' : t.files.map(f => `<li>${esc(f.name)}</li>`).join('');
-  const typeTag = quiz ? `<span class="type">ตอบคำถาม ${t.questions.length} ข้อ</span>` : '';
-  const btnText = quiz ? (t.submitted ? 'แก้ไขคำตอบ' : 'ตอบคำถาม') : (t.submitted ? 'แก้ไข / ส่งใหม่' : 'ส่งงาน');
-  return `<article class="card">
-    <div class="card-top"><span>${typeTag}${esc(t.period)} · ${esc(t.full)} คะแนน</span>${badge}</div>
-    <h3>${esc(t.title)}</h3>
-    ${t.desc ? `<p class="desc">${esc(t.desc)}</p>` : ''}
-    <p class="due">${t.dueText ? 'กำหนดส่ง ' + esc(t.dueText) : 'ไม่มีกำหนดส่ง'}</p>
-    ${t.submitted ? `<div class="sent">ส่งล่าสุด ${esc(t.submittedAt)}${t.count > 1 ? ` (ส่ง ${t.count} ครั้ง)` : ''}${files ? `<ul>${files}</ul>` : ''}</div>` : ''}
-    <button class="btn ${t.submitted ? 'ghost' : ''}" onclick="openUpload('${esc(t.id)}')">${btnText}</button>
-  </article>`;
-}
-
-/* ---------- อัปโหลด ---------- */
-function openUpload(id) {
-  state.task = state.tasks.find(t => t.id === id);
-  state.files = [];
-  $('mTitle').textContent = state.task.title;
-  const notes = [];
-  if (state.task.overdue) notes.push('เลยกำหนดส่งแล้ว ยังส่งได้ แต่จะบันทึกว่าส่งช้า');
-  const quiz = state.task.type === 'quiz';
-  if (state.task.submitted) notes.push(quiz ? 'แก้คำตอบแล้วกดส่งอีกครั้งได้' : 'การส่งใหม่จะแทนที่ไฟล์ที่ส่งไว้เดิม');
-  $('mInfo').textContent = notes.join(' · ');
-  msg('');
-  $('fileBox').classList.toggle('hidden', quiz);
-  $('quizBox').classList.toggle('hidden', !quiz);
-  $('sendBtn').textContent = quiz ? 'ส่งคำตอบ' : 'ส่งงาน';
-  if (quiz) {
-    $('quizBox').innerHTML = state.task.questions.length
-      ? state.task.questions.map((q, i) => `<div class="q">
-          <label for="ans${i}">${i + 1}. ${esc(q)}</label>
-          <textarea id="ans${i}" placeholder="พิมพ์คำตอบ">${esc(state.task.answers[i] || '')}</textarea>
-        </div>`).join('')
-      : '<p class="muted">ครูยังไม่ได้เพิ่มคำถามสำหรับงานนี้</p>';
-  }
-  renderFiles();
-  $('modal').classList.remove('hidden');
-}
-function closeUpload() { if (state.busy) return; $('modal').classList.add('hidden'); }
-
-function addFiles(list) {
-  for (const f of list) {
-    if (f.size > MAX_MB * 1024 * 1024 && !/^image\//.test(f.type)) { msg(`ไฟล์ ${f.name} ใหญ่เกิน ${MAX_MB} MB`, true); continue; }
-    state.files.push(f);
-  }
-  $('fileInput').value = '';
-  renderFiles();
-}
-function removeFile(i) { state.files.splice(i, 1); renderFiles(); }
-function renderFiles() {
-  $('fileList').innerHTML = state.files.map((f, i) =>
-    `<li><span>${esc(f.name)} <span class="muted">(${(f.size / 1048576).toFixed(1)} MB)</span></span><button onclick="removeFile(${i})">ลบ</button></li>`).join('');
-}
-function msg(t, isErr) { $('mMsg').textContent = t; $('mMsg').className = isErr ? 'err' : ''; }
-
-// ย่อรูปขนาดใหญ่ก่อนอัปโหลด (ช่วยมากเวลาถ่ายจากมือถือ)
-function prepare(file) {
-  const orig = { blob: file, name: file.name, type: file.type || 'application/octet-stream', size: file.size };
-  return new Promise(res => {
-    if (!/^image\/(jpeg|png|webp)$/.test(file.type) || file.size < 1.5e6) return res(orig);
-    const img = new Image(), url = URL.createObjectURL(file);
-    img.onload = () => {
-      const s = Math.min(1, 2000 / Math.max(img.width, img.height));
-      const c = document.createElement('canvas');
-      c.width = Math.round(img.width * s); c.height = Math.round(img.height * s);
-      const ctx = c.getContext('2d');
-      ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, c.width, c.height);
-      ctx.drawImage(img, 0, 0, c.width, c.height);
-      URL.revokeObjectURL(url);
-      c.toBlob(b => {
-        if (!b || b.size >= file.size) return res(orig);
-        res({ blob: b, name: file.name.replace(/\.\w+$/, '') + '.jpg', type: 'image/jpeg', size: b.size });
-      }, 'image/jpeg', 0.85);
-    };
-    img.onerror = () => { URL.revokeObjectURL(url); res(orig); };
-    img.src = url;
-  });
-}
-function toBase64(blob) {
-  return new Promise((res, rej) => {
-    const r = new FileReader();
-    r.onload = () => res(String(r.result).split(',')[1]);
-    r.onerror = rej;
-    r.readAsDataURL(blob);
-  });
-}
-
-async function send() {
-  if (state.task.type === 'quiz') return sendAnswers();
-  if (!state.files.length) return msg('กรุณาเลือกไฟล์ก่อน', true);
-  state.busy = true; $('sendBtn').disabled = true;
-  try {
-    const uploaded = [];
-    for (let i = 0; i < state.files.length; i++) {
-      msg(`กำลังอัปโหลดไฟล์ ${i + 1}/${state.files.length} …`);
-      const f = await prepare(state.files[i]);
-      if (f.size > MAX_MB * 1024 * 1024) throw new Error(`ไฟล์ ${f.name} ใหญ่เกิน ${MAX_MB} MB`);
-      uploaded.push(await run('uploadFile', {
-        room: state.room, no: state.student.no, name: state.student.name, pin: state.pin,
-        taskId: state.task.id, fileName: f.name, mimeType: f.type, data: await toBase64(f.blob)
-      }));
-    }
-    msg('กำลังบันทึก…');
-    const r = await run('submitWork', state.room, state.student.no, state.task.id, uploaded, state.pin);
-    state.busy = false;
-    closeUpload();
-    toast(`ส่งงานเรียบร้อย (${r.status}) ${r.time}`);
-    await loadTasks();
-  } catch (e) {
-    if (isAuth(e)) return authFail();
-    msg('ส่งไม่สำเร็จ: ' + errText(e), true);
-  } finally {
-    state.busy = false; $('sendBtn').disabled = false;
-  }
-}
-
-async function sendAnswers() {
-  const qs = state.task.questions;
-  if (!qs.length) return msg('งานนี้ยังไม่มีคำถาม', true);
-  const answers = qs.map((q, i) => $('ans' + i).value.trim());
-  const empty = answers.findIndex(a => !a);
-  if (empty >= 0) { $('ans' + empty).focus(); return msg(`ยังไม่ได้ตอบข้อ ${empty + 1}`, true); }
-  state.busy = true; $('sendBtn').disabled = true;
-  try {
-    msg('กำลังส่งคำตอบ…');
-    const r = await run('submitAnswers', state.room, state.student.no, state.task.id, answers, state.pin);
-    state.busy = false;
-    closeUpload();
-    toast(`ส่งคำตอบเรียบร้อย (${r.status}) ${r.time}`);
-    await loadTasks();
-  } catch (e) {
-    if (isAuth(e)) return authFail();
-    msg('ส่งไม่สำเร็จ: ' + errText(e), true);
-  } finally {
-    state.busy = false; $('sendBtn').disabled = false;
-  }
-}
-
-init();
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+document.getElementById('menu').innerHTML = MENU.map(m => {
+  const body = `<span class="icon">${m.icon}</span>
+    <span class="text"><h2>${esc(m.title)}</h2><p>${esc(m.desc)}</p></span>`;
+  const external = /^https?:\/\//.test(m.href);
+  const ready = m.ready && (external || !/\s/.test(m.href));   // ยังไม่ได้ใส่ลิงก์ = แสดงเป็น "เร็ว ๆ นี้"
+  return ready
+    ? `<a class="item" href="${esc(m.href)}"${external ? ' target="_blank" rel="noopener"' : ''}>${body}<span class="arrow">${external ? '↗' : '›'}</span></a>`
+    : `<div class="item soon">${body}<span class="tag">เร็ว ๆ นี้</span></div>`;
+}).join('');
 </script>
 </body>
 </html>
