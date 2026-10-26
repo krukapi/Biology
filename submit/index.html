@@ -66,6 +66,11 @@
   .pin{width:100%;padding:14px;font:inherit;font-size:20px;letter-spacing:4px;text-align:center;border:1px solid var(--line);border-radius:12px;margin-bottom:10px;background:#fff}
   .pin:focus{outline:2px solid var(--brand);border-color:transparent}
   #pinMsg{min-height:22px;font-size:14px;color:var(--red);margin-bottom:10px}
+  .score{display:flex;justify-content:space-between;align-items:center;gap:12px;background:var(--card);border:1px solid var(--line);border-left:6px solid var(--brand);border-radius:14px;padding:16px 18px;margin-bottom:14px}
+  .score-label{font-weight:700;font-size:17px}
+  .score-note{font-size:13px;color:var(--muted)}
+  .score-num{font-size:34px;font-weight:700;color:var(--brand-dark);white-space:nowrap;line-height:1}
+  .score-num small{font-size:16px;color:var(--muted);font-weight:600;margin-left:4px}
   #quizBox{margin:14px 0 6px}
   .q{margin-bottom:16px}
   .q label{display:block;font-weight:600;margin-bottom:6px;white-space:pre-wrap}
@@ -110,6 +115,13 @@
   </section>
 
   <section id="step-tasks" class="hidden">
+    <div class="score">
+      <div>
+        <div class="score-label">คะแนนปัจจุบัน</div>
+        <div class="score-note" id="scoreNote"></div>
+      </div>
+      <div class="score-num"><span id="scoreVal">–</span><small id="scoreFull"></small></div>
+    </div>
     <div class="tabs">
       <button id="tabPending" class="tab on" onclick="setTab('pending')">งานค้าง</button>
       <button id="tabDone" class="tab" onclick="setTab('done')">ส่งแล้ว</button>
@@ -284,12 +296,27 @@ function logout() {
 
 async function loadTasks() {
   loading(true);
-  try { state.tasks = await run('getTasks', state.room, state.student.no, state.pin); renderTasks(); }
+  try {
+    const [tasks, score] = await Promise.all([
+      run('getTasks', state.room, state.student.no, state.pin),
+      run('getScore', state.room, state.student.no, state.pin)
+    ]);
+    state.tasks = tasks;
+    renderTasks();
+    renderScore(score);
+  }
   catch (e) { loading(false); if (isAuth(e)) return authFail(); banner(e); }
   loading(false);
 }
 
 function setTab(t) { state.tab = t; renderTasks(); }
+
+function renderScore(s) {
+  const has = s && typeof s.total === 'number';
+  $('scoreVal').textContent = has ? s.total : '–';
+  $('scoreFull').textContent = '/ ' + ((s && s.full) || 100);
+  $('scoreNote').textContent = has ? 'รวมคะแนนเก็บและคะแนนสอบที่ครูกรอกแล้ว' : 'ยังไม่มีคะแนน';
+}
 
 function renderTasks() {
   const pending = state.tasks.filter(t => !t.submitted);
