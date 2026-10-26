@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>ระบบส่งงานวิชาชีววิทยา</title>
+<title>ระบบส่งงาน</title>
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
   :root{
@@ -62,6 +62,9 @@
   #mMsg{min-height:22px;font-size:14px;margin-bottom:10px}
   #mMsg.err{color:var(--red)}
   .actions{display:flex;gap:10px}
+  .pin{width:100%;padding:14px;font:inherit;font-size:20px;letter-spacing:4px;text-align:center;border:1px solid var(--line);border-radius:12px;margin-bottom:10px;background:#fff}
+  .pin:focus{outline:2px solid var(--brand);border-color:transparent}
+  #pinMsg{min-height:22px;font-size:14px;color:var(--red);margin-bottom:10px}
   #quizBox{margin:14px 0 6px}
   .q{margin-bottom:16px}
   .q label{display:block;font-weight:600;margin-bottom:6px;white-space:pre-wrap}
@@ -92,6 +95,16 @@
     <h2>เลือกชื่อของตัวเอง <span id="roomLabel" class="muted"></span></h2>
     <input id="search" type="search" placeholder="ค้นหาชื่อหรือเลขที่" oninput="renderStudents()">
     <div id="students" class="list"></div>
+  </section>
+
+  <section id="step-pin" class="hidden">
+    <button class="link" onclick="logout()">← เลือกชื่อใหม่</button>
+    <h2 id="pinTitle"></h2>
+    <p id="pinHelp" class="muted"></p>
+    <input id="pin1" class="pin" type="password" inputmode="numeric" autocomplete="off" placeholder="เลขประจำตัวนักเรียน" onkeydown="if(event.key==='Enter')doLogin()">
+    <input id="pin2" class="pin hidden" type="password" inputmode="numeric" autocomplete="off" placeholder="กรอกเลขประจำตัวอีกครั้ง" onkeydown="if(event.key==='Enter')doLogin()">
+    <div id="pinMsg"></div>
+    <button id="pinBtn" class="btn" onclick="doLogin()">เข้าสู่ระบบ</button>
   </section>
 
   <section id="step-tasks" class="hidden">
@@ -135,7 +148,8 @@ const state = { rooms: [], room: null, students: [], student: null, tasks: [], t
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const roomName = r => 'ม.' + String(r).replace('-', '/');
-const errText = e => String((e && e.message) || e).replace(/^(Exception|Error):\s*/, '');
+const errText = e => String((e && e.message) || e).replace(/^(Exception|Error):\s*/, '').replace('AUTH:', '');
+const isAuth = e => String((e && e.message) || e).includes('AUTH:');
 
 // เรียก Apps Script ผ่าน fetch (ส่งแบบ text/plain เพื่อเลี่ยงปัญหา CORS)
 async function run(action, ...args) {
@@ -153,7 +167,7 @@ async function run(action, ...args) {
 function store(k, v) { try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, v); } catch (e) {} }
 function load(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
 function loading(on) { $('loading').classList.toggle('hidden', !on); }
-function show(id) { ['step-room','step-name','step-tasks'].forEach(s => $(s).classList.toggle('hidden', s !== id)); }
+function show(id) { ['step-room','step-name','step-pin','step-tasks'].forEach(s => $(s).classList.toggle('hidden', s !== id)); }
 function banner(e) { const b = $('banner'); if (!e) return b.classList.add('hidden'); b.textContent = errText(e); b.classList.remove('hidden'); }
 function toast(t) { const d = document.createElement('div'); d.className = 'toast'; d.textContent = t; document.body.appendChild(d); setTimeout(() => d.remove(), 4000); }
 
@@ -201,17 +215,66 @@ function renderStudents() {
 
 async function pickStudent(no) {
   state.student = state.students.find(s => String(s.no) === String(no));
-  store('no', no);
+  state.pin = (load('no') === String(no) && load('pin')) || null;
+  if (state.pin) await enterTasks();
+  else await showPin();
+}
+
+async function showPin() {
+  loading(true); banner(null);
+  try {
+    const st = await run('getAuthState', state.room, state.student.no);
+    state.firstTime = !st.registered;
+    $('pinTitle').textContent = `${state.student.name} · เลขที่ ${state.student.no}`;
+    $('pinHelp').textContent = state.firstTime
+      ? 'เข้าใช้ครั้งแรก: กรอกเลขประจำตัวนักเรียน 2 ครั้ง เลขนี้จะใช้ยืนยันตัวตนทุกครั้งต่อไป'
+      : 'กรอกเลขประจำตัวนักเรียนเพื่อยืนยันตัวตน';
+    $('pin1').value = ''; $('pin2').value = '';
+    $('pin2').classList.toggle('hidden', !state.firstTime);
+    $('pinBtn').textContent = state.firstTime ? 'ลงทะเบียนและเข้าสู่ระบบ' : 'เข้าสู่ระบบ';
+    $('pinMsg').textContent = '';
+    $('who').innerHTML = '';
+    show('step-pin');
+    setTimeout(() => $('pin1').focus(), 50);
+  } catch (e) { banner(e); }
+  loading(false);
+}
+
+async function doLogin() {
+  const p1 = $('pin1').value.replace(/\s/g, ''), p2 = $('pin2').value.replace(/\s/g, '');
+  if (!/^\d{4,10}$/.test(p1)) return ($('pinMsg').textContent = 'เลขประจำตัวต้องเป็นตัวเลข 4–10 หลัก');
+  if (state.firstTime && p1 !== p2) return ($('pinMsg').textContent = 'เลขทั้งสองช่องไม่ตรงกัน');
+  $('pinBtn').disabled = true; $('pinMsg').textContent = '';
+  loading(true);
+  try {
+    await run('login', state.room, state.student.no, p1);
+    state.pin = p1;
+    store('no', state.student.no); store('pin', p1);
+    loading(false);
+    await enterTasks();
+  } catch (e) {
+    loading(false);
+    $('pinMsg').textContent = errText(e);
+  } finally { $('pinBtn').disabled = false; }
+}
+
+async function enterTasks() {
   $('who').innerHTML = `<span>${esc(state.student.name)} · ${esc(roomName(state.room))} เลขที่ ${esc(state.student.no)}</span>
-    <button class="link light" onclick="logout()">ไม่ใช่ฉัน</button>`;
+    <button class="link light" onclick="logout()">ออกจากระบบ</button>`;
   state.tab = 'pending';
   show('step-tasks');
   await loadTasks();
 }
 
+function authFail() {
+  store('pin', null); state.pin = null; state.busy = false;
+  $('modal').classList.add('hidden');
+  showPin();
+}
+
 function logout() {
-  store('no', null);
-  state.student = null;
+  store('no', null); store('pin', null);
+  state.student = null; state.pin = null;
   $('who').innerHTML = '';
   $('search').value = '';
   renderStudents();
@@ -220,8 +283,8 @@ function logout() {
 
 async function loadTasks() {
   loading(true);
-  try { state.tasks = await run('getTasks', state.room, state.student.no); renderTasks(); }
-  catch (e) { banner(e); }
+  try { state.tasks = await run('getTasks', state.room, state.student.no, state.pin); renderTasks(); }
+  catch (e) { loading(false); if (isAuth(e)) return authFail(); banner(e); }
   loading(false);
 }
 
@@ -342,17 +405,18 @@ async function send() {
       const f = await prepare(state.files[i]);
       if (f.size > MAX_MB * 1024 * 1024) throw new Error(`ไฟล์ ${f.name} ใหญ่เกิน ${MAX_MB} MB`);
       uploaded.push(await run('uploadFile', {
-        room: state.room, no: state.student.no, name: state.student.name,
+        room: state.room, no: state.student.no, name: state.student.name, pin: state.pin,
         taskId: state.task.id, fileName: f.name, mimeType: f.type, data: await toBase64(f.blob)
       }));
     }
     msg('กำลังบันทึก…');
-    const r = await run('submitWork', state.room, state.student.no, state.task.id, uploaded);
+    const r = await run('submitWork', state.room, state.student.no, state.task.id, uploaded, state.pin);
     state.busy = false;
     closeUpload();
     toast(`ส่งงานเรียบร้อย (${r.status}) ${r.time}`);
     await loadTasks();
   } catch (e) {
+    if (isAuth(e)) return authFail();
     msg('ส่งไม่สำเร็จ: ' + errText(e), true);
   } finally {
     state.busy = false; $('sendBtn').disabled = false;
@@ -368,12 +432,13 @@ async function sendAnswers() {
   state.busy = true; $('sendBtn').disabled = true;
   try {
     msg('กำลังส่งคำตอบ…');
-    const r = await run('submitAnswers', state.room, state.student.no, state.task.id, answers);
+    const r = await run('submitAnswers', state.room, state.student.no, state.task.id, answers, state.pin);
     state.busy = false;
     closeUpload();
     toast(`ส่งคำตอบเรียบร้อย (${r.status}) ${r.time}`);
     await loadTasks();
   } catch (e) {
+    if (isAuth(e)) return authFail();
     msg('ส่งไม่สำเร็จ: ' + errText(e), true);
   } finally {
     state.busy = false; $('sendBtn').disabled = false;
