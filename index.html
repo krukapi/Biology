@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>ระบบส่งงานรายวิชาชีววิทยา 2/2569</title>
+<title>ระบบส่งงานวิชาชีววิทยา</title>
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
   :root{
@@ -62,6 +62,12 @@
   #mMsg{min-height:22px;font-size:14px;margin-bottom:10px}
   #mMsg.err{color:var(--red)}
   .actions{display:flex;gap:10px}
+  #quizBox{margin:14px 0 6px}
+  .q{margin-bottom:16px}
+  .q label{display:block;font-weight:600;margin-bottom:6px;white-space:pre-wrap}
+  .q textarea{width:100%;min-height:90px;padding:10px 12px;font:inherit;border:1px solid var(--line);border-radius:12px;resize:vertical}
+  .q textarea:focus{outline:2px solid var(--brand);border-color:transparent}
+  .type{font-size:12px;font-weight:700;background:var(--brand-soft);color:var(--brand-dark);padding:1px 8px;border-radius:999px;margin-right:6px}
   .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:12px 18px;border-radius:12px;font-size:15px;z-index:30;max-width:90vw;text-align:center}
 </style>
 </head>
@@ -97,15 +103,18 @@
   </section>
 </main>
 
-<div id="modal" class="modal hidden" onclick="if(event.target===this)closeUpload()">
+<div id="modal" class="modal hidden" onclick="if(event.target===this && state.task.type!=='quiz')closeUpload()">
   <div class="sheet">
     <h3 id="mTitle"></h3>
     <div id="mInfo" class="muted"></div>
-    <label class="drop">
-      <input id="fileInput" type="file" multiple onchange="addFiles(this.files)">
-      📎 แตะเพื่อเลือกไฟล์ (เลือกได้หลายไฟล์)
-    </label>
-    <ul id="fileList"></ul>
+    <div id="fileBox">
+      <label class="drop">
+        <input id="fileInput" type="file" multiple onchange="addFiles(this.files)">
+        📎 แตะเพื่อเลือกไฟล์ (เลือกได้หลายไฟล์)
+      </label>
+      <ul id="fileList"></ul>
+    </div>
+    <div id="quizBox"></div>
     <div id="mMsg"></div>
     <div class="actions">
       <button class="btn ghost" onclick="closeUpload()">ยกเลิก</button>
@@ -234,14 +243,17 @@ function card(t) {
   let badge = '';
   if (!t.submitted) badge = t.overdue ? '<span class="badge b-red">เลยกำหนด</span>' : '';
   else badge = t.status === 'ส่งช้า' ? '<span class="badge b-orange">ส่งช้า</span>' : '<span class="badge b-green">ส่งแล้ว</span>';
-  const files = t.files.map(f => `<li>${esc(f.name)}</li>`).join('');
+  const quiz = t.type === 'quiz';
+  const files = quiz ? '' : t.files.map(f => `<li>${esc(f.name)}</li>`).join('');
+  const typeTag = quiz ? `<span class="type">ตอบคำถาม ${t.questions.length} ข้อ</span>` : '';
+  const btnText = quiz ? (t.submitted ? 'แก้ไขคำตอบ' : 'ตอบคำถาม') : (t.submitted ? 'แก้ไข / ส่งใหม่' : 'ส่งงาน');
   return `<article class="card">
-    <div class="card-top"><span>${esc(t.period)} · ${esc(t.full)} คะแนน</span>${badge}</div>
+    <div class="card-top"><span>${typeTag}${esc(t.period)} · ${esc(t.full)} คะแนน</span>${badge}</div>
     <h3>${esc(t.title)}</h3>
     ${t.desc ? `<p class="desc">${esc(t.desc)}</p>` : ''}
     <p class="due">${t.dueText ? 'กำหนดส่ง ' + esc(t.dueText) : 'ไม่มีกำหนดส่ง'}</p>
-    ${t.submitted ? `<div class="sent">ส่งล่าสุด ${esc(t.submittedAt)}${t.count > 1 ? ` (ส่ง ${t.count} ครั้ง)` : ''}<ul>${files}</ul></div>` : ''}
-    <button class="btn ${t.submitted ? 'ghost' : ''}" onclick="openUpload('${esc(t.id)}')">${t.submitted ? 'แก้ไข / ส่งใหม่' : 'ส่งงาน'}</button>
+    ${t.submitted ? `<div class="sent">ส่งล่าสุด ${esc(t.submittedAt)}${t.count > 1 ? ` (ส่ง ${t.count} ครั้ง)` : ''}${files ? `<ul>${files}</ul>` : ''}</div>` : ''}
+    <button class="btn ${t.submitted ? 'ghost' : ''}" onclick="openUpload('${esc(t.id)}')">${btnText}</button>
   </article>`;
 }
 
@@ -252,9 +264,21 @@ function openUpload(id) {
   $('mTitle').textContent = state.task.title;
   const notes = [];
   if (state.task.overdue) notes.push('เลยกำหนดส่งแล้ว ยังส่งได้ แต่จะบันทึกว่าส่งช้า');
-  if (state.task.submitted) notes.push('การส่งใหม่จะแทนที่ไฟล์ที่ส่งไว้เดิม');
+  const quiz = state.task.type === 'quiz';
+  if (state.task.submitted) notes.push(quiz ? 'แก้คำตอบแล้วกดส่งอีกครั้งได้' : 'การส่งใหม่จะแทนที่ไฟล์ที่ส่งไว้เดิม');
   $('mInfo').textContent = notes.join(' · ');
   msg('');
+  $('fileBox').classList.toggle('hidden', quiz);
+  $('quizBox').classList.toggle('hidden', !quiz);
+  $('sendBtn').textContent = quiz ? 'ส่งคำตอบ' : 'ส่งงาน';
+  if (quiz) {
+    $('quizBox').innerHTML = state.task.questions.length
+      ? state.task.questions.map((q, i) => `<div class="q">
+          <label for="ans${i}">${i + 1}. ${esc(q)}</label>
+          <textarea id="ans${i}" placeholder="พิมพ์คำตอบ">${esc(state.task.answers[i] || '')}</textarea>
+        </div>`).join('')
+      : '<p class="muted">ครูยังไม่ได้เพิ่มคำถามสำหรับงานนี้</p>';
+  }
   renderFiles();
   $('modal').classList.remove('hidden');
 }
@@ -308,6 +332,7 @@ function toBase64(blob) {
 }
 
 async function send() {
+  if (state.task.type === 'quiz') return sendAnswers();
   if (!state.files.length) return msg('กรุณาเลือกไฟล์ก่อน', true);
   state.busy = true; $('sendBtn').disabled = true;
   try {
@@ -326,6 +351,27 @@ async function send() {
     state.busy = false;
     closeUpload();
     toast(`ส่งงานเรียบร้อย (${r.status}) ${r.time}`);
+    await loadTasks();
+  } catch (e) {
+    msg('ส่งไม่สำเร็จ: ' + errText(e), true);
+  } finally {
+    state.busy = false; $('sendBtn').disabled = false;
+  }
+}
+
+async function sendAnswers() {
+  const qs = state.task.questions;
+  if (!qs.length) return msg('งานนี้ยังไม่มีคำถาม', true);
+  const answers = qs.map((q, i) => $('ans' + i).value.trim());
+  const empty = answers.findIndex(a => !a);
+  if (empty >= 0) { $('ans' + empty).focus(); return msg(`ยังไม่ได้ตอบข้อ ${empty + 1}`, true); }
+  state.busy = true; $('sendBtn').disabled = true;
+  try {
+    msg('กำลังส่งคำตอบ…');
+    const r = await run('submitAnswers', state.room, state.student.no, state.task.id, answers);
+    state.busy = false;
+    closeUpload();
+    toast(`ส่งคำตอบเรียบร้อย (${r.status}) ${r.time}`);
     await loadTasks();
   } catch (e) {
     msg('ส่งไม่สำเร็จ: ' + errText(e), true);
