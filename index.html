@@ -3,66 +3,138 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#2f6b52">
 <title>ห้องเรียนชีววิทยา</title>
-<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Anuphan:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
   :root{
-    --bg:#f3f6f4; --card:#fff; --ink:#1d2a23; --muted:#6a756f; --line:#dde4e0;
-    --brand:#1e7a52; --brand-dark:#155c3d; --brand-soft:#e2f2ea;
+    --bg:#f5f7f6; --card:#ffffff; --ink:#18241e; --muted:#7a857f; --line:#e7ece9;
+    --green:#2f6b52; --green-2:#3d8466;
+    --g-soft:#e8f3ed; --g-ink:#2f6b52;
+    --b-soft:#e7f0fb; --b-ink:#2f6db3;
+    --s-soft:#eef0f2; --s-ink:#8a949b;
   }
-  *{box-sizing:border-box}
-  body{margin:0;font-family:'Sarabun',system-ui,sans-serif;background:var(--bg);color:var(--ink);font-size:16px;line-height:1.5}
-  .wrap{max-width:720px;margin:0 auto;padding:0 16px}
-  header{background:var(--brand);color:#fff;padding:28px 0 24px}
-  header h1{margin:0;font-size:26px}
-  header p{margin:4px 0 0;opacity:.9}
-  main{padding:24px 0 60px}
-  .menu{display:grid;gap:14px}
-  .item{display:flex;align-items:center;gap:16px;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;text-decoration:none;color:var(--ink);transition:transform .1s,box-shadow .15s}
-  a.item:hover{box-shadow:0 4px 14px rgba(30,122,82,.12)}
-  a.item:active{transform:scale(.98)}
-  .icon{flex:none;width:56px;height:56px;border-radius:14px;background:var(--brand-soft);display:grid;place-items:center;font-size:28px}
-  .text h2{margin:0;font-size:19px}
-  .text p{margin:2px 0 0;color:var(--muted);font-size:14px}
-  .arrow{margin-left:auto;color:var(--brand);font-size:22px;font-weight:700}
-  .item.soon{opacity:.55;cursor:default}
-  .tag{margin-left:auto;font-size:12px;font-weight:700;background:#eceff1;color:var(--muted);padding:2px 10px;border-radius:999px;white-space:nowrap}
-  footer{text-align:center;color:var(--muted);font-size:13px;padding:0 0 30px}
+  *{box-sizing:border-box;margin:0}
+  body{font-family:'Anuphan',system-ui,sans-serif;background:var(--bg);color:var(--ink);font-size:16px;line-height:1.55;-webkit-font-smoothing:antialiased;min-height:100vh}
+  .wrap{max-width:680px;margin:0 auto;padding:0 20px}
+
+  /* ---------- header ---------- */
+  header{position:relative;overflow:hidden;background:linear-gradient(135deg,var(--green) 0%,var(--green-2) 100%);color:#fff;
+         border-radius:0 0 32px 32px;padding:44px 0 56px}
+  header .wrap{position:relative;z-index:1;display:flex;align-items:center;gap:18px}
+  .mark{flex:none;width:52px;height:52px;border-radius:16px;background:rgba(255,255,255,.14);display:grid;place-items:center;backdrop-filter:blur(4px)}
+  .mark svg{width:26px;height:26px}
+  header h1{font-size:28px;font-weight:600;letter-spacing:-.01em;line-height:1.2}
+  header p{margin-top:4px;font-size:15px;opacity:.78;font-weight:300}
+  .blob{position:absolute;border-radius:50%;background:rgba(255,255,255,.07)}
+  .blob.a{width:260px;height:260px;right:-70px;top:-120px}
+  .blob.b{width:120px;height:120px;left:-40px;bottom:-70px}
+  .leaf{position:absolute;right:18px;bottom:-6px;width:150px;height:150px;opacity:.28}
+
+  /* ---------- menu ---------- */
+  main.wrap{padding-top:28px;padding-bottom:40px}
+  .menu{display:grid;gap:12px}
+  .item{display:flex;align-items:center;gap:18px;background:var(--card);border:1px solid var(--line);border-radius:22px;
+        padding:18px 18px 18px 18px;text-decoration:none;color:inherit;
+        box-shadow:0 1px 2px rgba(24,36,30,.04);transition:transform .18s ease,box-shadow .18s ease,border-color .18s}
+  a.item:hover{transform:translateY(-2px);box-shadow:0 10px 28px -12px rgba(24,36,30,.18);border-color:transparent}
+  a.item:active{transform:scale(.985)}
+  a.item:focus-visible{outline:2px solid var(--green);outline-offset:3px}
+  .icon{flex:none;width:56px;height:56px;border-radius:18px;display:grid;place-items:center}
+  .icon svg{width:26px;height:26px}
+  .text{min-width:0;flex:1}
+  .text h2{font-size:18px;font-weight:600;letter-spacing:-.005em}
+  .text p{font-size:14px;color:var(--muted);margin-top:2px;font-weight:400}
+  .nw{white-space:nowrap}
+  .go{flex:none;width:36px;height:36px;border-radius:50%;display:grid;place-items:center;transition:transform .18s}
+  .go svg{width:18px;height:18px}
+  a.item:hover .go{transform:translateX(2px)}
+
+  .green .icon,.green .go{background:var(--g-soft);color:var(--g-ink)}
+  .blue  .icon,.blue  .go{background:var(--b-soft);color:var(--b-ink)}
+  .item.soon{background:transparent;box-shadow:none;border-style:dashed}
+  .item.soon .icon{background:var(--s-soft);color:var(--s-ink)}
+  .item.soon h2{color:var(--s-ink)}
+  .item.soon p{color:#a5aeb3}
+  .tag{flex:none;font-size:12px;font-weight:500;color:var(--s-ink);background:var(--s-soft);padding:4px 12px;border-radius:999px}
+
+  footer{text-align:center;color:#a5aeb3;font-size:13px;padding:8px 0 36px;letter-spacing:.02em}
+  footer span{display:inline-flex;align-items:center;gap:12px}
+  footer span::before,footer span::after{content:"";width:28px;height:1px;background:#d5dcd8}
+
+  @media (max-width:420px){
+    header{padding:36px 0 50px;border-radius:0 0 26px 26px}
+    header h1{font-size:24px}
+    .mark{width:46px;height:46px;border-radius:14px}
+    .item{gap:14px;padding:16px}
+    .icon{width:50px;height:50px;border-radius:16px}
+    .text h2{font-size:17px}
+    .leaf{width:110px;height:110px;right:-8px;opacity:.2}
+    .go{width:32px;height:32px}
+  }
+  @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
 <body>
 <header>
+  <span class="blob a"></span><span class="blob b"></span>
+  <svg class="leaf" viewBox="0 0 120 120" fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round" aria-hidden="true">
+    <path d="M60 118C60 80 64 50 82 18"/>
+    <path d="M82 18c-14 4-22 16-22 30 14-4 22-16 22-30z"/>
+    <path d="M70 44c14-2 26 4 32 16-14 2-26-4-32-16z"/>
+    <path d="M62 72c-14-4-26 0-34 12 14 4 26 0 34-12z"/>
+    <path d="M61 92c12-4 24-2 32 8-12 4-24 2-32-8z"/>
+  </svg>
   <div class="wrap">
-    <h1>ห้องเรียนชีววิทยา</h1>
-    <p>ม.4 · ภาคเรียนที่ 2/2569</p>
+    <div class="mark">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10z"/>
+        <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/>
+      </svg>
+    </div>
+    <div>
+      <h1>ห้องเรียนชีววิทยา</h1>
+      <p>ม.4 · ภาคเรียนที่ 2/2569</p>
+    </div>
   </div>
 </header>
 
 <main class="wrap">
-  <nav id="menu" class="menu"></nav>
+  <nav id="menu" class="menu" aria-label="เมนูหลัก"></nav>
 </main>
-<footer>โรงเรียนนางรอง</footer>
+<footer><span>โรงเรียนนางรอง</span></footer>
 
 <script>
 /* ===== เมนู: เพิ่ม/แก้ไขที่นี่ =====
-   ready: true  = เปิดใช้งาน (กดเข้าได้)
-   ready: false = ขึ้นว่า "เร็ว ๆ นี้"
+   color: 'green' | 'blue'    ready: false = แสดง "เร็ว ๆ นี้"
    href ที่ขึ้นต้นด้วย https:// (เช่นลิงก์ Drive) จะเปิดในแท็บใหม่      */
 const MENU = [
-  { icon: '📚', title: 'เอกสารประกอบการเรียน', desc: 'ใบความรู้ สไลด์ และคลิปประกอบบทเรียน',
+  { icon: 'book',   color: 'green', title: 'เอกสารประกอบการเรียน', desc: 'ใบความรู้ สไลด์ และคลิปประกอบบทเรียน',
     href: 'https://drive.google.com/drive/folders/1R1bPkcombRQYffNQXrdRec1xtFyFqQGI?usp=drive_link', ready: true },
-  { icon: '📤', title: 'ระบบส่งงาน',          desc: 'ส่งงาน ตอบคำถามท้ายคาบ ดูงานค้าง',  href: 'submit/', ready: true  },
-  { icon: '📝', title: 'ระบบสอบ',             desc: 'ทำแบบทดสอบออนไลน์',                  href: 'exam/',   ready: false },
+  { icon: 'upload', color: 'blue',  title: 'ระบบส่งงาน', desc: 'ส่งงาน ตอบคำถามท้ายคาบ ดูคะแนน', href: 'submit/', ready: true },
+  { icon: 'exam',   color: 'green', title: 'ระบบสอบ',   desc: 'ทำแบบทดสอบออนไลน์',            href: 'exam/',   ready: false },
 ];
 
+const ICONS = {
+  book:   '<path d="M2 4h6a4 4 0 0 1 4 4v13a3 3 0 0 0-3-3H2z"/><path d="M22 4h-6a4 4 0 0 0-4 4v13a3 3 0 0 1 3-3h7z"/>',
+  upload: '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M12 18v-6"/><path d="m9 15 3-3 3 3"/>',
+  exam:   '<rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="m9 14 2 2 4-4"/>',
+  next:   '<path d="m9 18 6-6-6-6"/>',
+  out:    '<path d="M7 17 17 7"/><path d="M8 7h9v9"/>'
+};
+const svg = (name, w = 1.8) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[name]}</svg>`;
+// ตัดบรรทัดเฉพาะตรงช่องว่าง ไม่ให้คำไทยขาดกลางคำ
+const phrases = s => String(s).split(' ').map(w => `<span class="nw">${esc(w)}</span>`).join(' ');
 const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
 document.getElementById('menu').innerHTML = MENU.map(m => {
-  const body = `<span class="icon">${m.icon}</span>
-    <span class="text"><h2>${esc(m.title)}</h2><p>${esc(m.desc)}</p></span>`;
   const external = /^https?:\/\//.test(m.href);
-  const ready = m.ready && (external || !/\s/.test(m.href));   // ยังไม่ได้ใส่ลิงก์ = แสดงเป็น "เร็ว ๆ นี้"
+  const ready = m.ready && (external || !/\s/.test(m.href));
+  const body = `<span class="icon">${svg(m.icon)}</span>
+    <span class="text"><h2>${esc(m.title)}</h2><p>${phrases(m.desc)}</p></span>`;
   return ready
-    ? `<a class="item" href="${esc(m.href)}"${external ? ' target="_blank" rel="noopener"' : ''}>${body}<span class="arrow">${external ? '↗' : '›'}</span></a>`
+    ? `<a class="item ${m.color}" href="${esc(m.href)}"${external ? ' target="_blank" rel="noopener"' : ''}>${body}<span class="go">${svg(external ? 'out' : 'next', 2.2)}</span></a>`
     : `<div class="item soon">${body}<span class="tag">เร็ว ๆ นี้</span></div>`;
 }).join('');
 </script>

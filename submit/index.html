@@ -4,38 +4,44 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>ระบบส่งงาน</title>
-<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
+<meta name="theme-color" content="#2f6b52">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Anuphan:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
   :root{
-    --bg:#f3f6f4; --card:#fff; --ink:#1d2a23; --muted:#6a756f; --line:#dde4e0;
-    --brand:#1e7a52; --brand-dark:#155c3d; --brand-soft:#e2f2ea;
+    --bg:#f5f7f6; --card:#fff; --ink:#18241e; --muted:#7a857f; --line:#e7ece9;
+    --brand:#2f6b52; --brand-dark:#245541; --brand-soft:#e8f3ed;
     --red:#b3261e; --red-soft:#fce8e6; --orange:#a35c00; --orange-soft:#fff1dc;
   }
   *{box-sizing:border-box}
-  body{margin:0;font-family:'Sarabun',system-ui,sans-serif;background:var(--bg);color:var(--ink);font-size:16px;line-height:1.5}
+  body{margin:0;font-family:'Anuphan',system-ui,sans-serif;-webkit-font-smoothing:antialiased;background:var(--bg);color:var(--ink);font-size:16px;line-height:1.5}
   .wrap{max-width:720px;margin:0 auto;padding:0 16px}
-  header{background:var(--brand);color:#fff;padding:18px 0 16px}
-  header h1{margin:0;font-size:22px}
+  header{position:relative;overflow:hidden;background:linear-gradient(135deg,#2f6b52 0%,#3d8466 100%);color:#fff;padding:22px 0 26px;border-radius:0 0 26px 26px}
+  header::after{content:"";position:absolute;width:220px;height:220px;border-radius:50%;background:rgba(255,255,255,.07);right:-60px;top:-110px}
+  header .wrap{position:relative;z-index:1}
+  header h1{margin:0;font-size:23px;font-weight:600;letter-spacing:-.01em}
   .home{color:#fff;opacity:.85;font-size:14px;text-decoration:none;display:inline-block;margin-bottom:2px}
   .who{margin-top:4px;font-size:15px;opacity:.95;display:flex;flex-wrap:wrap;gap:8px;align-items:center}
-  main{padding:20px 0 60px}
+  main.wrap{padding-top:22px;padding-bottom:60px}
   h2{font-size:19px;margin:4px 0 14px}
   .hidden{display:none!important}
   .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:12px}
-  .tile{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:22px 8px;font:inherit;font-size:20px;font-weight:700;color:var(--brand-dark);cursor:pointer}
+  .tile{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:24px 8px;font:inherit;font-size:20px;font-weight:600;color:var(--brand-dark);cursor:pointer;transition:transform .15s,box-shadow .15s}
+  .tile:hover,.row:hover{box-shadow:0 8px 22px -12px rgba(24,36,30,.2)}
   .tile:active,.row:active{transform:scale(.98)}
   input[type=search]{width:100%;padding:12px 14px;font:inherit;border:1px solid var(--line);border-radius:12px;margin-bottom:12px;background:#fff}
   .list{display:flex;flex-direction:column;gap:6px}
-  .row{display:flex;align-items:center;gap:12px;text-align:left;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px;font:inherit;cursor:pointer;color:var(--ink)}
-  .no{min-width:32px;height:32px;border-radius:50%;background:var(--brand-soft);color:var(--brand-dark);display:grid;place-items:center;font-weight:700;font-size:14px}
+  .row{display:flex;align-items:center;gap:12px;text-align:left;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 14px;font:inherit;cursor:pointer;color:var(--ink);transition:box-shadow .15s}
+  .no{min-width:32px;height:32px;border-radius:10px;background:var(--brand-soft);color:var(--brand-dark);display:grid;place-items:center;font-weight:600;font-size:14px}
   .link{background:none;border:0;color:var(--brand);font:inherit;padding:0;cursor:pointer;text-decoration:underline}
   .link.light{color:#fff;font-size:14px}
   .tabs{display:flex;gap:8px;margin-bottom:14px}
-  .tab{flex:1;padding:10px;border-radius:12px;border:1px solid var(--line);background:#fff;font:inherit;font-weight:600;cursor:pointer;color:var(--muted)}
-  .tab.on{background:var(--brand);border-color:var(--brand);color:#fff}
-  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:12px}
+  .tabs{background:#eaefec;padding:4px;border-radius:14px}
+  .tab{flex:1;padding:9px;border-radius:11px;border:0;background:transparent;font:inherit;font-weight:500;cursor:pointer;color:var(--muted);transition:background .15s,color .15s}
+  .tab.on{background:#fff;color:var(--ink);box-shadow:0 1px 3px rgba(24,36,30,.1)}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:18px;margin-bottom:12px;box-shadow:0 1px 2px rgba(24,36,30,.04)}
   .card-top{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:14px;color:var(--muted)}
-  .card h3{margin:6px 0 4px;font-size:18px}
+  .card h3{margin:6px 0 4px;font-size:18px;font-weight:600}
   .desc{margin:4px 0 8px;white-space:pre-wrap;color:#33413a}
   .due{margin:0 0 10px;font-size:14px;color:var(--muted)}
   .badge{font-size:13px;font-weight:700;padding:2px 10px;border-radius:999px;white-space:nowrap}
@@ -44,8 +50,10 @@
   .b-green{background:var(--brand-soft);color:var(--brand-dark)}
   .sent{background:#f7faf8;border-radius:10px;padding:10px 12px;font-size:14px;margin-bottom:10px}
   .sent ul{margin:4px 0 0;padding-left:20px}
-  .btn{width:100%;padding:12px;border:0;border-radius:12px;background:var(--brand);color:#fff;font:inherit;font-weight:700;cursor:pointer}
-  .btn.ghost{background:#fff;color:var(--brand-dark);border:1px solid var(--brand)}
+  .btn{width:100%;padding:12px;border:0;border-radius:14px;background:var(--brand);color:#fff;font:inherit;font-weight:500;cursor:pointer;transition:background .15s}
+  .btn:hover{background:var(--brand-dark)}
+  .btn.ghost{background:var(--brand-soft);color:var(--brand-dark);border:0}
+  .btn.ghost:hover{background:#dcece3}
   .btn:disabled{opacity:.6;cursor:wait}
   .empty{text-align:center;color:var(--muted);padding:40px 0}
   .muted{color:var(--muted)}
@@ -55,7 +63,7 @@
   .sheet{background:#fff;width:100%;max-width:560px;border-radius:18px 18px 0 0;padding:20px 16px 24px;max-height:90vh;overflow:auto}
   @media(min-width:600px){.modal{align-items:center}.sheet{border-radius:18px}}
   .sheet h3{margin:0 0 4px}
-  .drop{display:block;border:2px dashed var(--brand);border-radius:14px;padding:22px 12px;text-align:center;color:var(--brand-dark);font-weight:600;margin:14px 0;cursor:pointer;background:var(--brand-soft)}
+  .drop{display:block;border:1.5px dashed #9fc4b2;border-radius:16px;padding:22px 12px;text-align:center;color:var(--brand-dark);font-weight:600;margin:14px 0;cursor:pointer;background:var(--brand-soft)}
   .drop input{display:none}
   #fileList{list-style:none;padding:0;margin:0 0 10px}
   #fileList li{display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid var(--line);font-size:14px;word-break:break-all}
@@ -66,10 +74,10 @@
   .pin{width:100%;padding:14px;font:inherit;font-size:20px;letter-spacing:4px;text-align:center;border:1px solid var(--line);border-radius:12px;margin-bottom:10px;background:#fff}
   .pin:focus{outline:2px solid var(--brand);border-color:transparent}
   #pinMsg{min-height:22px;font-size:14px;color:var(--red);margin-bottom:10px}
-  .score{display:flex;justify-content:space-between;align-items:center;gap:12px;background:var(--card);border:1px solid var(--line);border-left:6px solid var(--brand);border-radius:14px;padding:16px 18px;margin-bottom:14px}
-  .score-label{font-weight:700;font-size:17px}
+  .score{display:flex;justify-content:space-between;align-items:center;gap:12px;background:var(--card);border:1px solid var(--line);border-radius:20px;padding:18px 20px;margin-bottom:14px}
+  .score-label{font-weight:600;font-size:16px}
   .score-note{font-size:13px;color:var(--muted)}
-  .score-num{font-size:34px;font-weight:700;color:var(--brand-dark);white-space:nowrap;line-height:1}
+  .score-num{font-size:34px;font-weight:600;color:var(--brand);white-space:nowrap;line-height:1;letter-spacing:-.02em}
   .score-num small{font-size:16px;color:var(--muted);font-weight:600;margin-left:4px}
   #quizBox{margin:14px 0 6px}
   .q{margin-bottom:16px}
@@ -137,7 +145,7 @@
     <div id="fileBox">
       <label class="drop">
         <input id="fileInput" type="file" multiple onchange="addFiles(this.files)">
-        📎 แตะเพื่อเลือกไฟล์ (เลือกได้หลายไฟล์)
+        แตะเพื่อเลือกไฟล์ <span class="muted" style="font-weight:400">· เลือกได้หลายไฟล์</span>
       </label>
       <ul id="fileList"></ul>
     </div>
@@ -315,7 +323,7 @@ function renderScore(s) {
   const has = s && typeof s.total === 'number';
   $('scoreVal').textContent = has ? s.total : '–';
   $('scoreFull').textContent = '/ ' + ((s && s.full) || 100);
-  $('scoreNote').textContent = has ? 'รวมคะแนนเก็บและคะแนนสอบที่ครูกรอกแล้ว' : 'ยังไม่มีคะแนน';
+  $('scoreNote').textContent = has ? 'คะแนนเก็บ + สอบ ที่ครูกรอกแล้ว' : 'ยังไม่มีคะแนน';
 }
 
 function renderTasks() {
@@ -327,7 +335,7 @@ function renderTasks() {
   $('tabDone').classList.toggle('on', state.tab === 'done');
   const list = state.tab === 'pending' ? pending : done;
   $('tasks').innerHTML = list.length ? list.map(card).join('')
-    : `<div class="empty">${state.tab === 'pending' ? '🎉 ไม่มีงานค้าง' : 'ยังไม่มีงานที่ส่ง'}</div>`;
+    : `<div class="empty">${state.tab === 'pending' ? 'ไม่มีงานค้าง เยี่ยมมาก' : 'ยังไม่มีงานที่ส่ง'}</div>`;
 }
 
 function card(t) {
