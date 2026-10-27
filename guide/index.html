@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#2f6b52">
+<title>คู่มือการใช้งาน · ระบบส่งงาน</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Anuphan:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#f5f7f6; --card:#fff; --ink:#18241e; --text:#3c4741; --muted:#66716b; --line:#e3e9e5;
+    --green:#2f6b52; --green-2:#3d8466; --soft:#e8f3ed;
+    --tap:#d9730d; --tap-soft:#fff1e3;
+    --red:#b3261e; --red-soft:#fce8e6; --orange:#9a5800; --orange-soft:#fff1dc;
+  }
+  *{box-sizing:border-box;margin:0}
+  html{scroll-behavior:smooth;scroll-padding-top:16px}
+  body{font-family:'Anuphan',system-ui,sans-serif;background:var(--bg);color:var(--ink);font-size:16px;line-height:1.6;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:920px;margin:0 auto;padding:0 20px}
+  .nw{white-space:nowrap}
+  a{color:var(--green)}
+
+  /* ---------- hero ---------- */
+  header{position:relative;overflow:hidden;background:linear-gradient(135deg,var(--green),var(--green-2));color:#fff;border-radius:0 0 32px 32px;padding:22px 0 44px}
+  header::before{content:"";position:absolute;width:300px;height:300px;border-radius:50%;background:rgba(255,255,255,.07);right:-80px;top:-140px}
+  header::after{content:"";position:absolute;width:140px;height:140px;border-radius:50%;background:rgba(255,255,255,.06);left:-50px;bottom:-80px}
+  header .wrap{position:relative;z-index:1}
+  .home{color:#fff;opacity:.85;text-decoration:none;font-size:14px}
+  .home:hover{opacity:1}
+  header h1{font-size:34px;font-weight:600;letter-spacing:-.01em;line-height:1.25;margin-top:18px}
+  header p{opacity:.85;font-weight:300;margin-top:6px;max-width:560px}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:22px}
+  .chips a{color:#fff;text-decoration:none;font-size:14px;font-weight:500;background:rgba(255,255,255,.14);padding:7px 14px;border-radius:999px;transition:background .15s}
+  .chips a:hover{background:rgba(255,255,255,.24)}
+
+  /* ---------- parts & steps ---------- */
+  main{padding:8px 0 40px}
+  .part{margin-top:44px}
+  .part-head{display:flex;align-items:center;gap:14px;margin-bottom:16px}
+  .part-ico{flex:none;width:48px;height:48px;border-radius:16px;background:var(--soft);color:var(--green);display:grid;place-items:center}
+  .part-ico svg{width:24px;height:24px}
+  .part-head small{display:block;color:var(--muted);font-size:13px;font-weight:500;letter-spacing:.04em}
+  .part-head h2{font-size:24px;font-weight:600;line-height:1.25}
+
+  .step{display:grid;grid-template-columns:minmax(0,1fr) 270px;gap:32px;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:24px;padding:28px;margin-bottom:14px}
+  .step-no{display:inline-grid;place-items:center;width:34px;height:34px;border-radius:11px;background:var(--green);color:#fff;font-weight:600;font-size:16px;margin-bottom:12px}
+  .step h3{font-size:20px;font-weight:600;line-height:1.35;margin-bottom:8px}
+  .step p{color:var(--text)}
+  .step ul,.step ol{color:var(--text);padding-left:20px;margin-top:8px}
+  .step li{margin:4px 0}
+  .ui{display:inline-block;font-weight:600;color:var(--green);background:var(--soft);padding:0 8px;border-radius:7px;white-space:nowrap;font-size:15px}
+  .note{margin-top:14px;font-size:15px;color:var(--text);background:#f6f8f7;border-radius:14px;padding:12px 14px;display:flex;gap:10px}
+  .note svg{flex:none;width:20px;height:20px;color:var(--green);margin-top:2px}
+  .note.warn{background:var(--tap-soft)}
+  .note.warn svg{color:var(--tap)}
+
+  /* ---------- phone mock ---------- */
+  .phone{width:250px;margin:0 auto;border:8px solid #1d2622;border-radius:34px;background:var(--bg);overflow:hidden;font-size:11.5px;line-height:1.45;box-shadow:0 18px 40px -22px rgba(24,36,30,.45);position:relative;user-select:none}
+  .ph-bar{background:#fff;padding:16px 10px 7px;font-size:10.5px;color:var(--muted);display:flex;align-items:center;gap:6px;border-bottom:1px solid var(--line)}
+  .ph-bar span{flex:1;background:#eef2f0;border-radius:8px;padding:3px 8px;text-align:center}
+  .ph-top{background:linear-gradient(135deg,var(--green),var(--green-2));color:#fff;padding:12px 12px 14px;border-radius:0 0 16px 16px}
+  .ph-top b{display:block;font-size:14px;font-weight:600}
+  .ph-top i{font-style:normal;opacity:.8;font-size:10.5px}
+  .ph-body{padding:10px;display:flex;flex-direction:column;gap:7px;min-height:290px}
+  .ph-h{font-weight:600;font-size:12.5px;margin:2px 0}
+  .ph-card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:9px}
+  .ph-menu{display:flex;align-items:center;gap:8px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:8px}
+  .ph-menu .ic{width:28px;height:28px;border-radius:9px;background:var(--soft);flex:none}
+  .ph-menu.blue .ic{background:#e7f0fb}
+  .ph-menu small{display:block;color:var(--muted);font-size:9.5px}
+  .ph-menu.dim{opacity:.5;border-style:dashed}
+  .ph-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+  .ph-tile{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px 4px;text-align:center;font-weight:600;font-size:13px;color:var(--green)}
+  .ph-row{display:flex;align-items:center;gap:8px;background:#fff;border:1px solid var(--line);border-radius:10px;padding:7px 8px}
+  .ph-row .n{width:20px;height:20px;border-radius:6px;background:var(--soft);color:var(--green);display:grid;place-items:center;font-weight:600;font-size:10px;flex:none}
+  .ph-input{background:#fff;border:1px solid var(--line);border-radius:10px;padding:8px;text-align:center;color:var(--muted)}
+  .ph-input.dots{letter-spacing:4px;color:var(--ink);font-size:14px;padding:6px}
+  .ph-search{background:#fff;border:1px solid var(--line);border-radius:10px;padding:7px 9px;color:#9aa49f}
+  .ph-btn{background:var(--green);color:#fff;border-radius:9px;padding:7px;text-align:center;font-weight:500}
+  .ph-btn.ghost{background:var(--soft);color:var(--green)}
+  .ph-score{display:flex;justify-content:space-between;align-items:center;background:#fff;border:1px solid var(--line);border-radius:12px;padding:9px 11px}
+  .ph-score b{font-size:20px;color:var(--green);font-weight:600}
+  .ph-score small{color:var(--muted);font-size:9.5px}
+  .ph-tabs{display:flex;background:#e6ece9;border-radius:10px;padding:3px;gap:3px}
+  .ph-tabs span{flex:1;text-align:center;padding:5px;border-radius:8px;color:var(--muted);font-weight:500}
+  .ph-tabs span.on{background:#fff;color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.08)}
+  .ph-meta{display:flex;justify-content:space-between;align-items:center;color:var(--muted);font-size:9.5px}
+  .ph-title{font-weight:600;font-size:12.5px;margin:3px 0 1px}
+  .ph-due{color:var(--muted);font-size:9.5px;margin-bottom:6px}
+  .bdg{font-size:9px;font-weight:600;padding:1px 7px;border-radius:999px}
+  .bdg.g{background:var(--soft);color:var(--green)} .bdg.o{background:var(--orange-soft);color:var(--orange)} .bdg.r{background:var(--red-soft);color:var(--red)}
+  .ph-sent{background:#f6f8f7;border-radius:8px;padding:6px 8px;font-size:9.5px;margin-bottom:6px}
+  .ph-shade{position:absolute;inset:0;background:rgba(0,0,0,.35);display:flex;align-items:flex-end}
+  .ph-sheet{background:#fff;width:100%;border-radius:18px 18px 0 0;padding:12px;display:flex;flex-direction:column;gap:7px}
+  .ph-drop{border:1.5px dashed #9fc4b2;background:var(--soft);border-radius:12px;padding:14px 6px;text-align:center;color:var(--green);font-weight:600}
+  .ph-file{display:flex;justify-content:space-between;border-bottom:1px solid var(--line);padding:4px 0;font-size:10.5px}
+  .ph-file em{font-style:normal;color:var(--red)}
+  .ph-actions{display:flex;gap:6px}.ph-actions>*{flex:1}
+  .ph-choice{display:flex;align-items:center;gap:7px;border:1px solid var(--line);border-radius:10px;padding:5px 7px}
+  .ph-choice .cl{width:18px;height:18px;border-radius:6px;background:#eef2f0;color:var(--muted);display:grid;place-items:center;font-weight:600;font-size:9.5px}
+  .ph-choice.on{border-color:var(--green);background:var(--soft)}
+  .ph-choice.on .cl{background:var(--green);color:#fff}
+  .ph-area{border:1px solid var(--line);border-radius:10px;padding:6px 8px;min-height:38px;color:var(--ink)}
+  .ph-toast{position:absolute;left:10px;right:10px;bottom:12px;background:var(--ink);color:#fff;border-radius:10px;padding:8px;text-align:center;font-size:10.5px}
+  .ph-msg{color:var(--green);font-size:10.5px}
+
+  /* "แตะตรงนี้" marker */
+  .tap{position:relative;outline:2.5px solid var(--tap);outline-offset:2px;animation:pulse 1.8s ease-in-out infinite}
+  .tap::after{content:"แตะ";position:absolute;right:-4px;top:-11px;background:var(--tap);color:#fff;font-size:9px;font-weight:600;padding:1px 7px;border-radius:999px;line-height:1.5}
+  @keyframes pulse{0%,100%{outline-color:var(--tap)}50%{outline-color:rgba(217,115,13,.35)}}
+
+  /* ---------- legend & FAQ ---------- */
+  .legend{display:grid;gap:8px;margin-top:12px}
+  .legend div{display:flex;gap:10px;align-items:center;font-size:15px;color:var(--text)}
+  .legend .bdg{font-size:12px;padding:2px 10px;flex:none;min-width:82px;text-align:center}
+  details{background:var(--card);border:1px solid var(--line);border-radius:18px;margin-bottom:10px;overflow:hidden}
+  summary{cursor:pointer;list-style:none;padding:16px 20px;font-weight:600;display:flex;justify-content:space-between;align-items:center;gap:12px}
+  summary::-webkit-details-marker{display:none}
+  summary::after{content:"";flex:none;width:9px;height:9px;border-right:2px solid var(--green);border-bottom:2px solid var(--green);transform:rotate(45deg);transition:transform .2s;margin-top:-4px}
+  details[open] summary::after{transform:rotate(-135deg);margin-top:4px}
+  summary:focus-visible{outline:2px solid var(--green);outline-offset:-2px;border-radius:18px}
+  details > div{padding:0 20px 18px;color:var(--text)}
+
+  .cta{margin-top:44px;background:var(--card);border:1px solid var(--line);border-radius:24px;padding:28px;display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap}
+  .cta h2{font-size:22px;font-weight:600}
+  .cta p{color:var(--muted)}
+  .btn{display:inline-flex;align-items:center;gap:8px;background:var(--green);color:#fff;text-decoration:none;font-weight:500;padding:12px 22px;border-radius:14px;transition:background .15s}
+  .btn:hover{background:#245541}
+  .btn svg{width:18px;height:18px}
+  footer{text-align:center;color:#8f9a94;font-size:13px;padding:8px 0 36px}
+
+  @media (max-width:720px){
+    header h1{font-size:27px}
+    .step{grid-template-columns:1fr;gap:22px;padding:22px}
+    .part-head h2{font-size:21px}
+  }
+  @media (prefers-reduced-motion:reduce){.tap{animation:none}html{scroll-behavior:auto}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <a class="home" href="../">← หน้าหลัก</a>
+    <h1>คู่มือการใช้งานระบบส่งงาน</h1>
+    <p>ทำตามทีละขั้น ตั้งแต่ลงทะเบียนครั้งแรกจนส่งงานเสร็จ จุดสีส้มคือ<span class="nw">ตำแหน่งที่ต้องแตะ</span></p>
+    <nav class="chips" aria-label="ไปยังหัวข้อ">
+      <a href="#register">1 · ลงทะเบียน</a>
+      <a href="#file">2 · ส่งงานไฟล์</a>
+      <a href="#quiz">3 · ตอบคำถาม</a>
+      <a href="#edit">4 · แก้ไขงาน</a>
+      <a href="#later">5 · ครั้งต่อไป</a>
+      <a href="#faq">ปัญหาที่พบบ่อย</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+
+<!-- ===================== ส่วนที่ 1 ===================== -->
+<section class="part" id="register">
+  <div class="part-head">
+    <span class="part-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg></span>
+    <div><small>ส่วนที่ 1 · ทำครั้งแรกครั้งเดียว</small><h2>ลงทะเบียนเข้าใช้งาน</h2></div>
+  </div>
+
+  <article class="step">
+    <div>
+      <span class="step-no">1</span>
+      <h3>เปิดเว็บไซต์ของห้องเรียน</h3>
+      <p>สแกน QR code ที่ครูแจก หรือแตะลิงก์ในกลุ่ม LINE ของห้อง</p>
+      <p style="margin-top:6px"><b>krukapi.github.io/Biology</b></p>
+      <div class="note">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+        <div><b>เพิ่มไว้หน้าจอหลัก จะได้เปิดง่ายเหมือนแอป</b><br>
+        iPhone: แตะปุ่มแชร์ <span class="nw">→ <span class="ui">เพิ่มไปยังหน้าจอโฮม</span></span><br>
+        Android: แตะ ⋮ มุมขวาบน <span class="nw">→ <span class="ui">เพิ่มลงในหน้าจอหลัก</span></span></div>
+      </div>
+    </div>
+    <div class="phone" aria-hidden="true">
+      <div class="ph-bar"><span class="tap">krukapi.github.io/Biology</span></div>
+      <div class="ph-top"><b>ห้องเรียนชีววิทยา</b><i>ม.4 · ภาคเรียนที่ 2/2569</i></div>
+      <div class="ph-body">
+        <div class="ph-menu"><span class="ic"></span><div><b>เอกสารประกอบการเรียน</b><small>ใบความรู้ สไลด์ คลิป</small></div></div>
+        <div class="ph-menu blue"><span class="ic"></span><div><b>ระบบส่งงาน</b><small>ส่งงาน ตอบคำถาม ดูคะแนน</small></div></div>
+        <div class="ph-menu"><span class="ic"></span><div><b>คู่มือการใช้งาน</b><small>วิธีลงทะเบียนและส่งงาน</small></div></div>
+        <div class="ph-menu dim"><span class="ic"></span><div><b>ระบบสอบ</b><small>เร็ว ๆ นี้</small></div></div>
+      </div>
+    </div>
+  </article>
+
+  <article class="step">
+    <div>
+      <span class="step-no">2</span>
+      <h3>แตะเมนู <span class="ui">ระบบส่งงาน</span></h3>
+      <p>เมนูนี้อยู่ในหน้าหลักของห้องเรียน มีไอคอนสีฟ้า</p>
+    </div>
+    <div class="phone" aria-hidden="true">
+      <div class="ph-top"><b>ห้องเรียนชีววิทยา</b><i>ม.4 · ภาคเรียนที่ 2/2569</i></div>
+      <div class="ph-body">
+        <div class="ph-menu"><span class="ic"></span><div><b>เอกสารประกอบการเรียน</b><small>ใบความรู้ สไลด์ คลิป</small></div></div>
+        <div class="ph-menu blue tap"><span class="ic"></span><div><b>ระบบส่งงาน</b><small>ส่งงาน ตอบคำถาม ดูคะแนน</small></div></div>
+        <div class="ph-menu"><span class="ic"></span><div><b>คู่มือการใช้งาน</b><small>วิธีลงทะเบียนและส่งงาน</small></div></div>
+        <div class="ph-menu dim"><span class="ic"></span><div><b>ระบบสอบ</b><small>เร็ว ๆ นี้</small></div></div>
+      </div>
+    </div>
+  </article>
+
+  <article class="step">
+    <div>
+      <span class="step-no">3</span>
+      <h3>เลือกห้องเรียนของตัวเอง</h3>
+      <p>แตะห้องที่เรียนอยู่ เช่น <span class="ui">ม.4/5</span></p>
+      <div class="note warn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>
+        <div>ไม่เห็นห้องของตัวเอง ให้แจ้งครู</div>
+      </div>
+    </div>
+    <div class="phone" aria-hidden="true">
+      <div class="ph-top"><b>ระบบส่งงาน</b><i>← หน้าหลัก</i></div>
+      <div class="ph-body">
+        <div class="ph-h">เลือกห้องเรียน</div>
+        <div class="ph-grid">
+          <div class="ph-tile tap">ม.4/5</div><div class="ph-tile">ม.4/8</div>
+          <div class="ph-tile">ม.4/11</div><div class="ph-tile">ม.4/14</div>
+          <div class="ph-tile">ม.4/15</div>
+        </div>
+      </div>
+    </div>
+  </article>
+
+  <article class="step">
+    <div>
+      <span class="step-no">4</span>
+      <h3>เลือกชื่อของตัวเอง</h3>
+      <p>เลื่อนหาชื่อ หรือพิมพ์ชื่อหรือเลขที่ในช่องค้นหา แล้วแตะชื่อของตัวเอง</p>
+      <div class="note warn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>
+        <div><b>เลือกชื่อตัวเองเท่านั้น</b> ถ้าเลือกชื่อเพื่อนแล้วลงทะเบียนไป เพื่อนจะเข้าระบบไม่ได้</div>
+      </div>
+    </div>
+    <div class="phone" aria-hidden="true">
+      <div class="ph-top"><b>ระบบส่งงาน</b><i>← เปลี่ยนห้อง</i></div>
+      <div class="ph-body">
+        <div class="ph-h">เลือกชื่อของตัวเอง <span style="color:var(--muted);font-weight:400">ม.4/5</span></div>
+        <div class="ph-search">ค้นหาชื่อหรือเลขที่</div>
+        <div class="ph-row"><span class="n">1</span>นายสมชาย ใจดี</div>
+        <div class="ph-row tap"><span class="n">2</span>นายภูมิ รักเรียน</div>
+        <div class="ph-row"><span class="n">3</span>นางสาวมะลิ สวยงาม</div>
+        <div class="ph-row"><span class="n">4</span>นางสาวพลอย ใจงาม</div>
+        <div class="ph-row"><span class="n">5</span>นายกล้า ขยัน</div>
+      </div>
+    </div>
+  </article>
+
+  <article class="step">
+    <div>
+      <span class="step-no">5</span>
+      <h3>ตั้งรหัสด้วยเลขประจำตัวนักเรียน</h3>
+      <ol>
+        <li>ช่องแรก กรอก<b>เลขประจำตัวนักเรียน</b></li>
+        <li>ช่องที่สอง กรอกเลขเดิมอีกครั้งให้ตรงกัน</li>
+        <li>แตะ <span class="ui">ลงทะเบียนและเข้าสู่ระบบ</span></li>
+      </ol>
+      <div class="note">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+        <div>เลขนี้คือรหัสผ่านของเรา ใช้ยืนยันตัวตนทุกครั้ง <b>ห้ามบอกเพื่อน</b></div>
+      </div>
+    </div>
+    <div class="phone" aria-hidden="true">
+      <div class="ph-top"><b>ระบบส่งงาน</b><i>← เลือกชื่อใหม่</i></div>
+      <div class="ph-body">
+        <div class="ph-h">นายภูมิ รักเรียน · เลขที่ 2</div>
+        <div style="color:var(--muted);font-size:10.5px">เข้าใช้ครั้งแรก: กรอกเลขประจำตัวนักเรียน 2 ครั้ง</div>
+        <div class="ph-input dots">•••••</div>
+        <div class="ph-input dots">•••••</div>
+        <div class="ph-btn tap">ลงทะเบียนและเข้าสู่ระบบ</div>
+      </div>
+    </div>
+  </article>
+
+  <article class="step">
+    <div>
+      <span class="step-no">6</span>
+      <h3>เข้าระบบสำเร็จ</h3>
+      <p>หน้าหลักของเรามี 3 ส่วน</p>
+      <ul>
+        <li><b>คะแนนปัจจุบัน</b> คะแนนรวมที่ครูกรอกแล้ว เต็ม 100</li>
+        <li>แท็บ <span class="ui">งานค้าง</span> งานที่ยังไม่ได้ส่ง</li>
+        <li>แท็บ <span class="ui">ส่งแล้ว</span> งานที่ส่งเรียบร้อยแล้ว</li>
+      </ul>
+    </div>
+    <div class="phone" aria-hidden="true">
+      <div class="ph-top"><b>ระบบส่งงาน</b><i>นายภูมิ รักเรียน · ม.4/5 เลขที่ 2</i></div>
+      <div class="ph-body">
+        <div class="ph-score"><div><b style="font-size:12px;color:var(--ink)">คะแนนปัจจุบัน</b><br><small>คะแนนเก็บ + สอบ</small></div><div><b>42.5</b> <small>/ 100</small></div></div>
+        <div class="ph-tabs"><span class="on">งานค้าง (2)</span><span>ส่งแล้ว (1)</span></div>
+        <div class="ph-card">
+          <div class="ph-meta"><span>ก่อนกลางภาค · 10 คะแนน</span></div>
+          <div class="ph-title">ใบงานที่ 2 โครงสร้างเซลล์</div>
+          <div class="ph-due">กำหนดส่ง 30 ต.ค. 2569 23:59 น.</div>
+          <div class="ph-btn">ส่งงาน</div>
+        </div>
+      </div>
+    </div>
+  </article>
+</section>
+
+<!-- ===================== ส่วนที่ 2 ===================== -->
+<section class="part" id="file">
+  <div class="part-head">
+    <span class="part-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M12 18v-6"/><path d="m9 15 3-3 3 3"/></svg></span>
+    <div><small>ส่วนที่ 2</small><h2>ส่งงานแบบแนบไฟล์</h2></div>
+  </div>
+
+  <article class="step">
+    <div>
+      <span class="step-no">1</span>
+      <h3>เลือกงานที่จะส่ง</h3>
+      <p>ในแท็บ <span class="ui">งานค้าง</span> อ่านชื่องานและกำหนดส่ง แล้วแตะ <span class="ui">ส่งงาน</span> ที่การ์ดของงานนั้น</p>
+      <p style="margin-top:8px">งานที่กำหนดส่งใกล้ที่สุดจะอยู่บนสุดเสมอ</p>
+    </div>
+    <div class="phone" aria-hidden="true">
+      <div class="ph-top"><b>ระบบส่งงาน</b><i>นายภูมิ รักเรียน · ม.4/5 เลขที่ 2</i></div>
+      <div class="ph-body">
+        <div class="ph-tabs"><span class="on">งานค้าง (2)</span><span>ส่งแล้ว (1)</span></div>
+        <div class="ph-card">
+          <div class="ph-meta"><span>ก่อนกลางภาค · 10 คะแนน</span></div>
+          <div class="ph-title">ใบงานที่ 2 โครงสร้างเซลล์</div>
+          <div class="ph-due">กำหนดส่ง 30 ต.ค. 2569 23:59 น.</div>
+          <div class="ph-btn tap">ส่งงาน</div>
+        </div>
+        <div class="ph-card">
+          <div class="ph-meta"><span><span class="bdg g">ตอบคำถาม 2 ข้อ</span> 5 คะแนน</span></div>
+          <div class="ph-title">คำถามท้ายคาบ เรื่องเซลล์</div>
+          <div class="ph-due">กำหนดส่ง 31 ต.ค. 2569 23:59 น.</div>
+          <div class="ph-btn">ตอบคำถาม</div>
+        </div>
+      </div>
+    </div>
+  </article>
+
+  <article class="step">
+    <div>
+      <span class="step-no">2</span>
+      <h3>เลือกไฟล์หรือถ่ายรูปงาน</h3>
+      <p>แตะ <span class="ui">แตะเพื่อเลือกไฟล์</span> แล้วเลือกได้ 3 แบบ</p>
+      <ul>
+        <li><b>ถ่ายรูป</b> ถ่ายรูปงานในสมุดหรือใบงานได้ทันที</li>
+        <li><b>คลังรูปภาพ</b> เลือกรูปที่ถ่ายไว้แล้ว</li>
+        <li><b>ไฟล์</b> PDF, Word, PowerPoint และไฟล์อื่น ๆ</li>
+      </ul>
+      <p style="margin-top:8px">เลือกได้หลายไฟล์ในครั้งเดียว ถ้าเลือกผิดก็แตะ <span class="ui" style="color:var(--red);background:var(--red-soft)">ลบ</span> ออกได้</p>
+    </div>
+    <div class="phone" aria-hidden="true">
+      <div class="ph-top"><b>ระบบส่งงาน</b><i>นายภูมิ รักเรียน · ม.4/5 เลขที่ 2</i></div>
+      <div class="ph-body"></div>
+      <div class="ph-shade">
+        <div class="ph-sheet">
+          <div class="ph-h">ใบงานที่ 2 โครงสร้างเซลล์</div>
+          <div class="ph-drop tap">แตะเพื่อเลือกไฟล์</div>
+          <div class="ph-file"><span>ใบงาน-หน้า1.jpg (1.2 MB)</span><em>ลบ</em></div>
+          <div class="ph-file"><span>ใบงาน-หน้า2.jpg (1.1 MB)</span><em>ลบ</em></div>
+          <div class="ph-actions" style="margin-top:4px"><div class="ph-btn ghost">ยกเลิก</div><div class="ph-btn">ส่งงาน</div></div>
+        </div>
+      </div>
+    </div>
+  </article>
+
+  <article class="step">
+    <div>
+      <span class="step-no">3</span>
+      <h3>แตะ <span class="ui">ส่งงาน</span> แล้วรอจนเสร็จ</h3>
+      <p>ระบบจะแสดงว่ากำลังอัปโหลดไฟล์ที่เท่าไร <b>อย่าปิดหน้าเว็บระหว่างนี้</b></p>
+      <p style="margin-top:8px">เมื่อเสร็จจะมีข้อความ <b>"ส่งงานเรียบร้อย"</b> ขึ้นด้านล่างพร้อมเวลาที่ส่ง</p>
+      <div class="note">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+        <div>ระบบย่อรูปขนาดใหญ่ให้อัตโนมัติ ไฟล์อื่นแต่ละไฟล์ต้องไม่เกิน 20 MB</div>
+      </div>
+    </div>
+    <div class="phone" aria-hidden="true">
+      <div class="ph-top"><b>ระบบส่งงาน</b><i>นายภูมิ รักเรียน · ม.4/5 เลขที่ 2</i></div>
+      <div class="ph-body"></div>
+      <div class="ph-shade">
+        <div class="ph-sheet">
+          <div class="ph-h">ใบงานที่ 2 โครงสร้างเซลล์</div>
+          <div class="ph-drop">แตะเพื่อเลือกไฟล์</div>
+          <div class="ph-file"><span>ใบงาน-หน้า1.jpg (1.2 MB)</span><em>ลบ</em></div>
+          <div class="ph-file"><span>ใบงาน-หน้า2.jpg (1.1 MB)</span><em>ลบ</em></div>
+          <div class="ph-msg">กำลังอัปโหลดไฟล์ 2/2 …</div>
+          <div class="ph-actions"><div class="ph-btn ghost">ยกเลิก</div><div class="ph-btn tap">ส่งงาน</div></div>
+        </div>
+      </div>
+    </div>
+  </article>
+
+  <article class="step">
+    <div>
+      <span class="step-no">4</span>
+      <h3>ตรวจในแท็บ <span class="ui">ส่งแล้ว</span></h3>
+      <p>งานที่ส่งสำเร็จจะย้ายมาอยู่ในแท็บนี้ พร้อมเวลาที่ส่งและชื่อไฟล์ ป้ายมุมขวาบนบอกสถานะ</p>
+      <div class="legend">
+        <div><span class="bdg g">ส่งแล้ว</span>ส่งทันกำหนด</div>
+        <div><span class="bdg o">ส่งช้า</span>ส่งหลังกำหนด (ยังส่งได้)</div>
+        <div><span class="bdg r">เลยกำหนด</span>ยังไม่ส่ง และเลยกำหนดแล้ว รีบส่ง</div>
+      </div>
+    </div>
+    <div class="phone" aria-hidden="true">
+      <div class="ph-top"><b>ระบบส่งงาน</b><i>นายภูมิ รักเรียน · ม.4/5 เลขที่ 2</i></div>
+      <div class="ph-body">
+        <div class="ph-tabs"><span>งานค้าง (1)</span><span class="on tap">ส่งแล้ว (2)</span></div>
+        <div class="ph-card">
+          <div class="ph-meta"><span>ก่อนกลางภาค · 10 คะแนน</span><span class="bdg g">ส่งแล้ว</span></div>
+          <div class="ph-title">ใบงานที่ 2 โครงสร้างเซลล์</div>
+          <div class="ph-due">กำหนดส่ง 30 ต.ค. 2569 23:59 น.</div>
+          <div class="ph-sent">ส่งล่าสุด 27 ต.ค. 2569 14:05 น.<br>• ใบงาน-หน้า1.jpg<br>• ใบงาน-หน้า2.jpg</div>
+          <div class="ph-btn ghost">แก้ไข / ส่งใหม่</div>
+        </div>
+      </div>
+      <div class="ph-toast">ส่งงานเรียบร้อย (ตรงเวลา) 27 ต.ค. 2569 14:05 น.</div>
+    </div>
+  </article>
+</section>
+
+<!-- ===================== ส่วนที่ 3 ===================== -->
+<section class="part" id="quiz">
+  <div class="part-head">
+    <span class="part-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="m9 14 2 2 4-4"/></svg></span>
+    <div><small>ส่วนที่ 3</small><h2>ตอบคำถามท้ายคาบ</h2></div>
+  </div>
+
+  <article class="step">
+    <div>
+      <span class="step-no">1</span>
+      <h3>แตะ <span class="ui">ตอบคำถาม</span></h3>
+      <p>งานแบบตอบคำถามมีป้ายสีเขียว <span class="ui" style="font-size:13px">ตอบคำถาม 2 ข้อ</span> บอกจำนวนข้อ ส่วนใหญ่ครูจะเปิดให้ตอบช่วงท้ายคาบ</p>
+    </div>
+    <div class="phone" aria-hidden="true">
+      <div class="ph-top"><b>ระบบส่งงาน</b><i>นายภูมิ รักเรียน · ม.4/5 เลขที่ 2</i></div>
+      <div class="ph-body">
+        <div class="ph-tabs"><span class="on">งานค้าง (1)</span><span>ส่งแล้ว (2)</span></div>
+        <div class="ph-card">
+          <div class="ph-meta"><span><span class="bdg g">ตอบคำถาม 2 ข้อ</span> 5 คะแนน</span></div>
+          <div class="ph-title">คำถามท้ายคาบ เรื่องเซลล์</div>
+          <div class="ph-due">กำหนดส่ง 31 ต.ค. 2569 23:59 น.</div>
+          <div class="ph-btn tap">ตอบคำถาม</div>
+        </div>
+      </div>
+    </div>
+  </article>
+
+  <article class="step">
+    <div>
+      <span class="step-no">2</span>
+      <h3>ตอบให้ครบทุกข้อ แล้วแตะ <span class="ui">ส่งคำตอบ</span></h3>
+      <ul>
+        <li><b>ข้อปรนัย</b> แตะตัวเลือกที่ถูกต้อง ข้อที่เลือกจะเปลี่ยนเป็นสีเขียว</li>
+        <li><b>ข้อเขียน</b> พิมพ์คำตอบในช่อง</li>
+      </ul>
+      <div class="note warn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>
+        <div>ต้องตอบ<b>ครบทุกข้อ</b>จึงจะส่งได้ ถ้ายังขาดข้อไหน ระบบจะพาเลื่อนไปที่ข้อนั้นให้เอง</div>
+      </div>
+    </div>
+    <div class="phone" aria-hidden="true">
+      <div class="ph-top"><b>ระบบส่งงาน</b><i>นายภูมิ รักเรียน · ม.4/5 เลขที่ 2</i></div>
+      <div class="ph-body"></div>
+      <div class="ph-shade">
+        <div class="ph-sheet">
+          <div class="ph-h">คำถามท้ายคาบ เรื่องเซลล์</div>
+          <div style="font-weight:600;font-size:10.5px">1. ออร์แกเนลล์ใดสร้างพลังงานให้เซลล์</div>
+          <div class="ph-choice"><span class="cl">ก</span>ไรโบโซม</div>
+          <div class="ph-choice on tap"><span class="cl">ข</span>ไมโทคอนเดรีย</div>
+          <div class="ph-choice"><span class="cl">ค</span>กอลจิบอดี</div>
+          <div style="font-weight:600;font-size:10.5px;margin-top:3px">2. เซลล์พืชต่างจากเซลล์สัตว์อย่างไร</div>
+          <div class="ph-area">เซลล์พืชมีผนังเซลล์และคลอโรพลาสต์</div>
+          <div class="ph-actions"><div class="ph-btn ghost">ยกเลิก</div><div class="ph-btn">ส่งคำตอบ</div></div>
+        </div>
+      </div>
+    </div>
+  </article>
+</section>
+
+<!-- ===================== ส่วนที่ 4 ===================== -->
+<section class="part" id="edit">
+  <div class="part-head">
+    <span class="part-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg></span>
+    <div><small>ส่วนที่ 4</small><h2>แก้ไขงานที่ส่งไปแล้ว</h2></div>
+  </div>
+
+  <article class="step">
+    <div>
+      <span class="step-no">1</span>
+      <h3>แตะ <span class="ui">แก้ไข / ส่งใหม่</span> หรือ <span class="ui">แก้ไขคำตอบ</span></h3>
+      <p>ไปที่แท็บ <span class="ui">ส่งแล้ว</span> แล้วแตะปุ่มที่การ์ดงานนั้น</p>
+      <ul>
+        <li><b>งานไฟล์:</b> เลือกไฟล์ใหม่ให้<b>ครบทุกไฟล์</b> เพราะไฟล์ชุดใหม่จะแทนที่ชุดเดิมทั้งหมด</li>
+        <li><b>งานคำถาม:</b> คำตอบเดิมจะขึ้นมาให้ แก้เฉพาะข้อที่ต้องการแล้วส่งใหม่</li>
+      </ul>
+      <div class="note">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+        <div>แก้ไขได้จนกว่าครูจะปิดรับงาน ถ้าส่งครั้งแรกทันกำหนด แก้ทีหลังก็ยังนับว่าตรงเวลา</div>
+      </div>
+    </div>
+    <div class="phone" aria-hidden="true">
+      <div class="ph-top"><b>ระบบส่งงาน</b><i>นายภูมิ รักเรียน · ม.4/5 เลขที่ 2</i></div>
+      <div class="ph-body">
+        <div class="ph-tabs"><span>งานค้าง (0)</span><span class="on">ส่งแล้ว (3)</span></div>
+        <div class="ph-card">
+          <div class="ph-meta"><span>ก่อนกลางภาค · 10 คะแนน</span><span class="bdg g">ส่งแล้ว</span></div>
+          <div class="ph-title">ใบงานที่ 2 โครงสร้างเซลล์</div>
+          <div class="ph-sent">ส่งล่าสุด 27 ต.ค. 2569 14:05 น.<br>• ใบงาน-หน้า1.jpg</div>
+          <div class="ph-btn ghost tap">แก้ไข / ส่งใหม่</div>
+        </div>
+        <div class="ph-card">
+          <div class="ph-meta"><span><span class="bdg g">ตอบคำถาม 2 ข้อ</span></span><span class="bdg g">ส่งแล้ว</span></div>
+          <div class="ph-title">คำถามท้ายคาบ เรื่องเซลล์</div>
+          <div class="ph-btn ghost">แก้ไขคำตอบ</div>
+        </div>
+      </div>
+    </div>
+  </article>
+</section>
+
+<!-- ===================== ส่วนที่ 5 ===================== -->
+<section class="part" id="later">
+  <div class="part-head">
+    <span class="part-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/></svg></span>
+    <div><small>ส่วนที่ 5</small><h2>เข้าครั้งต่อไป และออกจากระบบ</h2></div>
+  </div>
+
+  <article class="step">
+    <div>
+      <span class="step-no">1</span>
+      <h3>ครั้งต่อไปง่ายกว่าเดิม</h3>
+      <ul>
+        <li><b>เครื่องเดิม:</b> เปิดเว็บแล้วเข้าหน้างานของเราได้ทันที ไม่ต้องกรอกอะไรเลย</li>
+        <li><b>เครื่องใหม่:</b> เลือกห้อง เลือกชื่อ แล้วกรอกเลขประจำตัว<b>ช่องเดียว</b></li>
+      </ul>
+      <h3 style="margin-top:20px">ใช้เครื่องคนอื่น ต้องออกจากระบบ</h3>
+      <p>ถ้ายืมเครื่องเพื่อนหรือใช้คอมพิวเตอร์ของโรงเรียน ส่งงานเสร็จแล้วให้แตะ <span class="ui">ออกจากระบบ</span> ที่มุมบนทุกครั้ง ไม่อย่างนั้นคนต่อไปจะเข้าชื่อเราได้</p>
+    </div>
+    <div class="phone" aria-hidden="true">
+      <div class="ph-top"><b>ระบบส่งงาน</b><i>นายภูมิ รักเรียน · ม.4/5 เลขที่ 2</i> <i class="tap" style="display:inline-block;text-decoration:underline;opacity:1;margin-top:4px">ออกจากระบบ</i></div>
+      <div class="ph-body">
+        <div class="ph-score"><div><b style="font-size:12px;color:var(--ink)">คะแนนปัจจุบัน</b><br><small>คะแนนเก็บ + สอบ</small></div><div><b>48</b> <small>/ 100</small></div></div>
+        <div class="ph-tabs"><span class="on">งานค้าง (0)</span><span>ส่งแล้ว (3)</span></div>
+        <div style="text-align:center;color:var(--muted);padding:30px 0">ไม่มีงานค้าง เยี่ยมมาก</div>
+      </div>
+    </div>
+  </article>
+</section>
+
+<!-- ===================== FAQ ===================== -->
+<section class="part" id="faq">
+  <div class="part-head">
+    <span class="part-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg></span>
+    <div><small>ช่วยเหลือ</small><h2>ปัญหาที่พบบ่อย</h2></div>
+  </div>
+
+  <details>
+    <summary>ลืมเลขที่ใช้ลงทะเบียน หรือเลือกชื่อผิดไปแล้ว</summary>
+    <div>แจ้งครูให้ล้างการลงทะเบียน แล้วกลับไปทำ <a href="#register">ส่วนที่ 1</a> ใหม่อีกครั้ง</div>
+  </details>
+  <details>
+    <summary>ขึ้นว่า "เลขประจำตัวนี้ถูกใช้ลงทะเบียนแล้ว"</summary>
+    <div>มีคนใช้เลขนี้ลงทะเบียนชื่ออื่นไปก่อน ตรวจดูว่าเลือกชื่อถูกหรือไม่ ถ้าถูกแล้วให้แจ้งครู</div>
+  </details>
+  <details>
+    <summary>ขึ้นว่า "กรอกรหัสผิดหลายครั้ง"</summary>
+    <div>กรอกผิดครบ 5 ครั้ง ระบบจะล็อกไว้ชั่วคราว รอ 5 นาทีแล้วลองใหม่ ถ้าจำเลขไม่ได้ให้แจ้งครู</div>
+  </details>
+  <details>
+    <summary>เปิดจาก LINE แล้วเลือกไฟล์ไม่ได้</summary>
+    <div>เบราว์เซอร์ในแอป LINE บางเครื่องอัปโหลดไฟล์ไม่ได้ ให้แตะ ⋯ หรือ ⋮ มุมขวาบน แล้วเลือก <span class="ui">เปิดในเบราว์เซอร์</span> (Chrome หรือ Safari) หรือเพิ่มเว็บไว้หน้าจอหลักตาม<a href="#register">ขั้นตอนที่ 1</a></div>
+  </details>
+  <details>
+    <summary>ส่งงานไม่ผ่าน หรือค้างนานมาก</summary>
+    <div>ส่วนใหญ่เกิดจากอินเทอร์เน็ตช้า ลองย้ายไปที่สัญญาณดีขึ้นแล้วแตะส่งใหม่ ถ้าไฟล์ใหญ่มาก (เช่น วิดีโอ) ให้ลดขนาดไฟล์ก่อน ไฟล์ละไม่เกิน 20 MB</div>
+  </details>
+  <details>
+    <summary>ส่งแล้ว แต่งานยังอยู่ในแท็บงานค้าง</summary>
+    <div>ถ้ายังไม่ขึ้นข้อความ "ส่งงานเรียบร้อย" แปลว่ายังส่งไม่สำเร็จ ให้ส่งใหม่ ถ้าขึ้นข้อความแล้วแต่งานยังไม่ย้าย ให้ดึงหน้าจอลงเพื่อรีเฟรช</div>
+  </details>
+  <details>
+    <summary>ไม่เห็นงานที่ครูสั่ง</summary>
+    <div>ครูอาจยังไม่ได้เปิดรับงานนั้น ให้รีเฟรชหน้าเว็บ ถ้ายังไม่ขึ้นให้สอบถามครู</div>
+  </details>
+  <details>
+    <summary>คะแนนยังเป็น "–" หรือไม่เปลี่ยน</summary>
+    <div>คะแนนจะขึ้นหลังครูตรวจและกรอกคะแนนแล้ว ไม่ได้ขึ้นทันทีที่ส่งงาน ยกเว้นคำถามปรนัยบางชุดที่ระบบตรวจให้อัตโนมัติ</div>
+  </details>
+</section>
+
+<section class="cta">
+  <div>
+    <h2>พร้อมแล้ว เริ่มใช้งานได้เลย</h2>
+    <p>ลงทะเบียนครั้งเดียว ใช้ได้ตลอดภาคเรียน</p>
+  </div>
+  <a class="btn" href="../submit/">เข้าระบบส่งงาน
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></a>
+</section>
+
+</main>
+<footer>โรงเรียนนางรอง · ชีววิทยา ม.4</footer>
+</body>
+</html>

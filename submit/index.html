@@ -82,6 +82,15 @@
   #quizBox{margin:14px 0 6px}
   .q{margin-bottom:16px}
   .q label{display:block;font-weight:600;margin-bottom:6px;white-space:pre-wrap}
+  fieldset.q{border:0;padding:0}
+  .q legend{font-weight:600;margin-bottom:8px;padding:0;white-space:pre-wrap}
+  .q label.choice{display:flex;align-items:center;gap:12px;font-weight:400;white-space:normal;padding:11px 14px;border:1px solid var(--line);border-radius:14px;margin-bottom:8px;cursor:pointer;transition:border-color .15s,background .15s}
+  .choice:hover{border-color:#b9d3c5}
+  .choice input{position:absolute;opacity:0;pointer-events:none}
+  .cl{flex:none;width:28px;height:28px;border-radius:9px;background:#eef2f0;color:var(--muted);display:grid;place-items:center;font-weight:600;font-size:14px;transition:background .15s,color .15s}
+  .choice:has(input:checked){border-color:var(--brand);background:var(--brand-soft)}
+  .choice:has(input:checked) .cl{background:var(--brand);color:#fff}
+  .choice:has(input:focus-visible){outline:2px solid var(--brand);outline-offset:2px}
   .q textarea{width:100%;min-height:90px;padding:10px 12px;font:inherit;border:1px solid var(--line);border-radius:12px;resize:vertical}
   .q textarea:focus{outline:2px solid var(--brand);border-color:transparent}
   .type{font-size:12px;font-weight:700;background:var(--brand-soft);color:var(--brand-dark);padding:1px 8px;border-radius:999px;margin-right:6px}
@@ -164,6 +173,7 @@
 <script>
 
 const MAX_MB = 20;
+const LABELS = ['ก', 'ข', 'ค', 'ง', 'จ', 'ฉ', 'ช', 'ซ'];
 const state = { rooms: [], room: null, students: [], student: null, tasks: [], tab: 'pending', task: null, files: [], busy: false };
 
 const $ = id => document.getElementById(id);
@@ -372,10 +382,17 @@ function openUpload(id) {
   $('sendBtn').textContent = quiz ? 'ส่งคำตอบ' : 'ส่งงาน';
   if (quiz) {
     $('quizBox').innerHTML = state.task.questions.length
-      ? state.task.questions.map((q, i) => `<div class="q">
-          <label for="ans${i}">${i + 1}. ${esc(q)}</label>
-          <textarea id="ans${i}" placeholder="พิมพ์คำตอบ">${esc(state.task.answers[i] || '')}</textarea>
-        </div>`).join('')
+      ? state.task.questions.map((q, i) => {
+          const prev = state.task.answers[i] || '';
+          if (q.choices && q.choices.length) {
+            return `<fieldset class="q" id="ans${i}"><legend>${i + 1}. ${esc(q.text)}</legend>
+              ${q.choices.map((c, j) => `<label class="choice"><input type="radio" name="q${i}" value="${esc(c)}"${c === prev ? ' checked' : ''}>
+                <span class="cl">${LABELS[j] || j + 1}</span><span>${esc(c)}</span></label>`).join('')}
+            </fieldset>`;
+          }
+          return `<div class="q"><label for="ans${i}">${i + 1}. ${esc(q.text)}</label>
+            <textarea id="ans${i}" placeholder="พิมพ์คำตอบ">${esc(prev)}</textarea></div>`;
+        }).join('')
       : '<p class="muted">ครูยังไม่ได้เพิ่มคำถามสำหรับงานนี้</p>';
   }
   renderFiles();
@@ -462,9 +479,20 @@ async function send() {
 async function sendAnswers() {
   const qs = state.task.questions;
   if (!qs.length) return msg('งานนี้ยังไม่มีคำถาม', true);
-  const answers = qs.map((q, i) => $('ans' + i).value.trim());
+  const answers = qs.map((q, i) => {
+    if (q.choices && q.choices.length) {
+      const r = document.querySelector(`input[name="q${i}"]:checked`);
+      return r ? r.value : '';
+    }
+    return $('ans' + i).value.trim();
+  });
   const empty = answers.findIndex(a => !a);
-  if (empty >= 0) { $('ans' + empty).focus(); return msg(`ยังไม่ได้ตอบข้อ ${empty + 1}`, true); }
+  if (empty >= 0) {
+    const el = $('ans' + empty);
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    if (el.tagName === 'TEXTAREA') el.focus();
+    return msg(`ยังไม่ได้ตอบข้อ ${empty + 1}`, true);
+  }
   state.busy = true; $('sendBtn').disabled = true;
   try {
     msg('กำลังส่งคำตอบ…');
