@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#2f6b52">
+<title>ระบบสอบ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Anuphan:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#f5f7f6; --card:#fff; --ink:#18241e; --text:#3c4741; --muted:#6c7771; --line:#e3e9e5;
+    --brand:#2f6b52; --brand-dark:#245541; --soft:#e8f3ed;
+    --red:#b3261e; --red-soft:#fce8e6; --amber:#9a5800; --amber-soft:#fff1dc;
+  }
+  *{box-sizing:border-box;margin:0}
+  body{font-family:'Anuphan',system-ui,sans-serif;background:var(--bg);color:var(--ink);font-size:16px;line-height:1.55;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:720px;margin:0 auto;padding:0 16px}
+  .hidden{display:none!important}
+  button{font:inherit}
+
+  header{position:relative;overflow:hidden;background:linear-gradient(135deg,#2f6b52,#3d8466);color:#fff;padding:22px 0 26px;border-radius:0 0 26px 26px}
+  header::after{content:"";position:absolute;width:220px;height:220px;border-radius:50%;background:rgba(255,255,255,.07);right:-60px;top:-110px}
+  header .wrap{position:relative;z-index:1}
+  .home{color:#fff;opacity:.85;font-size:14px;text-decoration:none}
+  header h1{font-size:23px;font-weight:600;margin-top:2px}
+  .who{margin-top:4px;font-size:15px;opacity:.95;display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+  .link{background:none;border:0;color:var(--brand);padding:0;cursor:pointer;text-decoration:underline}
+  .link.light{color:#fff;font-size:14px}
+  main.wrap{padding-top:22px;padding-bottom:60px}
+  h2{font-size:19px;font-weight:600;margin:4px 0 14px}
+  .muted{color:var(--muted)}
+  .banner{background:var(--red-soft);color:var(--red);padding:10px 14px;border-radius:12px;margin-bottom:14px}
+
+  /* login */
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:12px}
+  .tile{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:24px 8px;font-size:20px;font-weight:600;color:var(--brand);cursor:pointer}
+  .list{display:flex;flex-direction:column;gap:6px}
+  .row{display:flex;align-items:center;gap:12px;text-align:left;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 14px;cursor:pointer;color:var(--ink)}
+  .no{min-width:32px;height:32px;border-radius:10px;background:var(--soft);color:var(--brand);display:grid;place-items:center;font-weight:600;font-size:14px}
+  input[type=search],.pin{width:100%;padding:12px 14px;font:inherit;border:1px solid var(--line);border-radius:12px;margin-bottom:12px;background:#fff}
+  .pin{font-size:20px;letter-spacing:4px;text-align:center}
+  #pinMsg{min-height:22px;font-size:14px;color:var(--red);margin-bottom:10px}
+
+  /* buttons & cards */
+  .btn{display:block;width:100%;padding:12px;border:0;border-radius:14px;background:var(--brand);color:#fff;font-weight:500;cursor:pointer;text-align:center;transition:background .15s}
+  .btn:hover{background:var(--brand-dark)}
+  .btn.ghost{background:var(--soft);color:var(--brand-dark)}
+  .btn:disabled{background:#e4e9e6;color:#8b958f;cursor:not-allowed}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:18px;margin-bottom:12px}
+  .card h3{font-size:18px;font-weight:600;margin:4px 0 10px}
+  .meta{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+  .chip{font-size:13px;font-weight:500;background:#f0f3f1;color:var(--text);padding:3px 10px;border-radius:999px}
+  .chip.g{background:var(--soft);color:var(--brand)}
+  .chip.a{background:var(--amber-soft);color:var(--amber)}
+  .best{display:flex;justify-content:space-between;align-items:center;background:#f6f8f7;border-radius:12px;padding:10px 14px;margin-bottom:12px;font-size:15px}
+  .best b{font-size:20px;color:var(--brand);font-weight:600}
+  .empty{text-align:center;color:var(--muted);padding:48px 0}
+
+  /* exam */
+  .bar{position:sticky;top:0;z-index:5;background:rgba(245,247,246,.94);backdrop-filter:blur(6px);padding:10px 0 12px;margin:0 0 6px}
+  .bar-top{display:flex;justify-content:space-between;align-items:baseline;gap:10px;font-size:14px}
+  .bar-top b{font-size:16px;font-weight:600;color:var(--ink)}
+  .track{height:6px;background:#e1e8e4;border-radius:99px;margin-top:8px;overflow:hidden}
+  .fill{height:100%;background:var(--brand);border-radius:99px;width:0;transition:width .2s}
+  fieldset.q{border:1px solid var(--line);background:var(--card);border-radius:20px;padding:18px;margin-bottom:12px;scroll-margin-top:90px}
+  fieldset.q.miss{border-color:#e9a63c;box-shadow:0 0 0 3px var(--amber-soft)}
+  .q legend{float:left;width:100%;padding:0;margin-bottom:12px;font-weight:600;font-size:17px;line-height:1.5}
+  .q legend span{color:var(--muted);font-weight:500;margin-right:6px}
+  .choice{display:flex;align-items:center;gap:12px;padding:11px 14px;border:1px solid var(--line);border-radius:14px;margin-bottom:8px;cursor:pointer;transition:border-color .15s,background .15s;clear:both}
+  .choice:last-child{margin-bottom:0}
+  .choice:hover{border-color:#b9d3c5}
+  .choice input{position:absolute;opacity:0;pointer-events:none}
+  .cl{flex:none;width:30px;height:30px;border-radius:10px;background:#eef2f0;color:var(--muted);display:grid;place-items:center;font-weight:600;font-size:15px;transition:background .15s,color .15s}
+  .choice:has(input:checked){border-color:var(--brand);background:var(--soft)}
+  .choice:has(input:checked) .cl{background:var(--brand);color:#fff}
+  .choice:has(input:focus-visible){outline:2px solid var(--brand);outline-offset:2px}
+  .confirm{background:var(--amber-soft);border-radius:16px;padding:14px 16px;margin:6px 0 12px;color:var(--amber)}
+  .confirm p{margin-bottom:10px}
+  .actions{display:flex;gap:10px}
+  .actions .btn{flex:1}
+
+  /* result */
+  .result{text-align:center;padding:28px 18px}
+  .ring{width:150px;height:150px;border-radius:50%;margin:6px auto 16px;display:grid;place-items:center}
+  .ring div{width:122px;height:122px;border-radius:50%;background:#fff;display:grid;place-items:center;align-content:center}
+  .ring b{font-size:36px;font-weight:600;color:var(--brand);line-height:1}
+  .ring small{color:var(--muted);font-size:14px;margin-top:4px}
+  .result h3{font-size:20px;margin-bottom:4px}
+  .result p{color:var(--text)}
+
+  /* proctoring */
+  .rules-card{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:22px}
+  .rules-card h2{margin:0 0 4px}
+  .rules-list{list-style:none;padding:0;margin:16px 0;display:grid;gap:10px}
+  .rules-list li{display:flex;gap:12px;align-items:flex-start;background:#f6f8f7;border-radius:14px;padding:12px 14px}
+  .rules-list svg{flex:none;width:22px;height:22px;color:var(--red);margin-top:1px}
+  .rules-list b{display:block;font-weight:600}
+  .rules-list span{font-size:14px;color:var(--muted)}
+  .rule-box{border-radius:14px;padding:12px 14px;margin-bottom:16px;font-size:15px;background:var(--amber-soft);color:var(--amber)}
+  .tip{font-size:14px;color:var(--muted);margin:-4px 0 16px}
+  .chip.r{background:var(--red-soft);color:var(--red)}
+  .guard-pill{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:500;color:var(--brand);background:var(--soft);padding:2px 10px;border-radius:999px;margin-top:6px}
+  .guard-pill.warned{color:var(--amber);background:var(--amber-soft)}
+  .guard-pill svg{width:13px;height:13px}
+  .watermark{position:fixed;inset:-50%;z-index:4;pointer-events:none;display:flex;flex-wrap:wrap;align-content:flex-start;gap:70px 90px;transform:rotate(-24deg);opacity:.07;font-weight:600;font-size:17px;color:#18241e;padding:40px;user-select:none}
+  body.noselect .who .link{display:none}
+  .noselect{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+  .overlay{position:fixed;inset:0;z-index:30;background:rgba(24,36,30,.72);display:flex;align-items:center;justify-content:center;padding:20px}
+  .dialog{background:#fff;border-radius:22px;padding:24px 22px;max-width:420px;width:100%;text-align:center}
+  .dialog .ico{width:58px;height:58px;border-radius:50%;margin:0 auto 12px;display:grid;place-items:center;background:var(--amber-soft);color:var(--amber)}
+  .dialog .ico svg{width:30px;height:30px}
+  .dialog h3{font-size:21px;font-weight:600;margin-bottom:6px}
+  .dialog p{color:var(--text);margin-bottom:6px}
+  .dialog .why{display:inline-block;font-weight:600;color:var(--amber);background:var(--amber-soft);border-radius:8px;padding:2px 10px;margin:6px 0 10px}
+  .locked .ico{background:var(--red-soft);color:var(--red)}
+  @media print{body *{visibility:hidden!important}}
+  #loading{position:fixed;inset:0;background:rgba(245,247,246,.75);display:grid;place-items:center;font-weight:500;color:var(--brand);z-index:20}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <a class="home" href="../">← หน้าหลัก</a>
+    <h1>ระบบสอบ</h1>
+    <div id="who" class="who"></div>
+  </div>
+</header>
+
+<main class="wrap">
+  <div id="banner" class="banner hidden"></div>
+
+  <section id="v-room" class="hidden">
+    <h2>เลือกห้องเรียน</h2>
+    <div id="rooms" class="grid"></div>
+  </section>
+
+  <section id="v-name" class="hidden">
+    <button class="link" onclick="showRooms()">← เปลี่ยนห้อง</button>
+    <h2 style="margin-top:6px">เลือกชื่อของตัวเอง <span id="roomLabel" class="muted"></span></h2>
+    <input id="search" type="search" placeholder="ค้นหาชื่อหรือเลขที่" oninput="renderStudents()" aria-label="ค้นหาชื่อ">
+    <div id="students" class="list"></div>
+  </section>
+
+  <section id="v-pin" class="hidden">
+    <button class="link" onclick="logout()">← เลือกชื่อใหม่</button>
+    <h2 id="pinTitle" style="margin-top:6px"></h2>
+    <p id="pinHelp" class="muted" style="margin-bottom:12px"></p>
+    <input id="pin1" class="pin" type="password" inputmode="numeric" autocomplete="off" placeholder="เลขประจำตัวนักเรียน" aria-label="เลขประจำตัวนักเรียน" onkeydown="if(event.key==='Enter')doLogin()">
+    <input id="pin2" class="pin hidden" type="password" inputmode="numeric" autocomplete="off" placeholder="กรอกเลขประจำตัวอีกครั้ง" aria-label="ยืนยันเลขประจำตัว" onkeydown="if(event.key==='Enter')doLogin()">
+    <div id="pinMsg"></div>
+    <button id="pinBtn" class="btn" onclick="doLogin()">เข้าสู่ระบบ</button>
+  </section>
+
+  <section id="v-list" class="hidden">
+    <h2>ข้อสอบที่เปิดอยู่</h2>
+    <div id="exams"></div>
+  </section>
+
+  <section id="v-rules" class="hidden">
+    <div class="rules-card">
+      <h2 id="ruTitle"></h2>
+      <p class="muted">ข้อสอบชุดนี้เปิดระบบป้องกันการทุจริต อ่านกติกาก่อนเริ่ม</p>
+      <ul class="rules-list">
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="14" rx="2"/><path d="m8 21h8"/><path d="m9 9 6 6"/><path d="m15 9-6 6"/></svg>
+          <div><b>ห้ามสลับแอปหรือเปลี่ยนแท็บ</b><span>รวมถึงกดกลับหน้าโฮม และเปิดแอปแชต</span></div></li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M12 3v18"/></svg>
+          <div><b>ห้ามแบ่งหน้าจอหรือเปิดหน้าต่างลอย</b><span>ต้องเปิดข้อสอบเต็มจออย่างเดียว</span></div></li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M21 8V5a2 2 0 0 0-2-2h-3"/><path d="M3 16v3a2 2 0 0 0 2 2h3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/></svg>
+          <div><b>ห้ามย่อหน้าจอหรือออกจากโหมดเต็มจอ</b><span>ห้ามรีเฟรชหรือปิดหน้าระหว่างทำ</span></div></li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3z"/><circle cx="12" cy="13" r="3"/></svg>
+          <div><b>ห้ามแคปหน้าจอหรือถ่ายรูปข้อสอบ</b><span>ข้อสอบมีชื่อของเราพิมพ์จาง ๆ อยู่ทุกหน้า</span></div></li>
+      </ul>
+      <div class="rule-box"><b>ครั้งที่ 1</b> ระบบจะเตือน · <b>ครั้งที่ 2</b> ข้อสอบจะถูกล็อกและส่งคำตอบที่ทำไว้ทันที</div>
+      <p class="tip">ก่อนเริ่ม: ปิดแอปอื่น เปิดโหมด "ห้ามรบกวน" และชาร์จแบตให้พอ เพื่อไม่ให้มีสายเข้าหรือการแจ้งเตือนเด้งระหว่างสอบ</p>
+      <div class="actions">
+        <button class="btn ghost" onclick="loadExams()">ยกเลิก</button>
+        <button class="btn" onclick="begin()">เข้าใจแล้ว เริ่มทำ</button>
+      </div>
+    </div>
+  </section>
+
+  <section id="v-locked" class="hidden">
+    <div class="card result locked">
+      <div class="dialog" style="padding:0;max-width:none">
+        <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></div>
+        <h3>ข้อสอบถูกล็อก</h3>
+        <p>ตรวจพบการออกจากหน้าข้อสอบครบ 2 ครั้ง ระบบส่งคำตอบที่ทำไว้ให้แล้ว</p>
+        <p id="lkWhy" class="why"></p>
+        <p id="lkScore" style="font-size:18px;font-weight:600;color:var(--ink)"></p>
+        <p class="muted">หากคิดว่าเป็นความผิดพลาด ให้ติดต่อครูผู้สอน</p>
+        <button class="btn ghost" style="margin-top:14px" onclick="loadExams()">กลับไปหน้ารายการข้อสอบ</button>
+      </div>
+    </div>
+  </section>
+
+  <section id="v-exam" class="hidden">
+    <div class="bar">
+      <div class="bar-top"><b id="exTitle"></b><span id="exCount" class="muted"></span></div>
+      <div class="track"><div id="exFill" class="fill"></div></div>
+      <span id="guard" class="guard-pill hidden"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg><span id="guardText"></span></span>
+    </div>
+    <form id="exForm" onsubmit="event.preventDefault();trySubmit()"></form>
+    <div id="confirm" class="confirm hidden">
+      <p id="confirmText"></p>
+      <div class="actions">
+        <button class="btn ghost" type="button" onclick="goMissing()">กลับไปตอบ</button>
+        <button class="btn" type="button" onclick="sendExam()">ส่งเลย</button>
+      </div>
+    </div>
+    <button id="sendBtn" class="btn" type="button" onclick="trySubmit()">ส่งคำตอบ</button>
+    <p class="muted" style="text-align:center;font-size:14px;margin-top:10px">คำตอบถูกบันทึกในเครื่องไว้ ถ้าเผลอปิดหน้า กลับมาทำต่อได้</p>
+  </section>
+
+  <section id="v-result" class="hidden">
+    <div class="card result">
+      <div id="ring" class="ring"><div><b id="rScore"></b><small id="rFull"></small></div></div>
+      <h3>ส่งข้อสอบเรียบร้อย</h3>
+      <p id="rDetail"></p>
+      <p id="rBest" class="muted" style="margin-top:4px"></p>
+      <button class="btn ghost" style="margin-top:18px" onclick="loadExams()">กลับไปหน้ารายการข้อสอบ</button>
+    </div>
+  </section>
+</main>
+<div id="watermark" class="watermark hidden" aria-hidden="true"></div>
+<div id="warn" class="overlay hidden" role="alertdialog" aria-modal="true" aria-labelledby="warnTitle">
+  <div class="dialog">
+    <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m10.3 3.9-8.2 14a2 2 0 0 0 1.7 3h16.4a2 2 0 0 0 1.7-3l-8.2-14a2 2 0 0 0-3.4 0z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg></div>
+    <h3 id="warnTitle">คำเตือน ครั้งที่ 1</h3>
+    <p>ระบบตรวจพบ</p>
+    <p id="warnWhy" class="why"></p>
+    <p>หากเกิดขึ้นอีก <b>ข้อสอบจะถูกล็อกและส่งคำตอบทันที</b></p>
+    <button class="btn" style="margin-top:12px" onclick="resume()">กลับไปทำข้อสอบต่อ</button>
+  </div>
+</div>
+<div id="loading">กำลังโหลด…</div>
+
+<script src="../config.js"></script>
+<script>
+const LABELS = ['ก', 'ข', 'ค', 'ง', 'จ'];
+const S = { rooms: [], room: null, students: [], student: null, pin: null, exams: [], ex: null, ans: {}, missing: [], sending: false };
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const roomName = r => 'ม.' + String(r).replace('-', '/');
+const errText = e => String((e && e.message) || e).replace(/^(Exception|Error):\s*/, '').replace('AUTH:', '');
+const isAuth = e => String((e && e.message) || e).includes('AUTH:');
+const store = (k, v) => { try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, v); } catch (e) {} };
+const load = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
+const loading = on => $('loading').classList.toggle('hidden', !on);
+const VIEWS = ['v-room', 'v-name', 'v-pin', 'v-list', 'v-rules', 'v-exam', 'v-result', 'v-locked'];
+function show(id) { VIEWS.forEach(v => $(v).classList.toggle('hidden', v !== id)); window.scrollTo(0, 0); }
+function banner(e) { const b = $('banner'); if (!e) return b.classList.add('hidden'); b.textContent = errText(e); b.classList.remove('hidden'); }
+
+async function run(action, ...args) {
+  let res;
+  try { res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action, args }) }); }
+  catch (e) { throw new Error('เชื่อมต่อเซิร์ฟเวอร์ไม่ได้ ตรวจสอบอินเทอร์เน็ตแล้วลองใหม่'); }
+  const out = await res.json().catch(() => null);
+  if (!out) throw new Error('เซิร์ฟเวอร์ตอบกลับผิดรูปแบบ');
+  if (!out.ok) throw new Error(out.error);
+  return out.data;
+}
+
+/* ---------- เข้าสู่ระบบ (ใช้ข้อมูลเดียวกับระบบส่งงาน) ---------- */
+async function init() {
+  loading(true);
+  try {
+    S.rooms = await run('getRooms');
+    const r = load('room');
+    if (r && S.rooms.includes(r)) await pickRoom(r, load('no'));
+    else showRooms();
+  } catch (e) { banner(e); }
+  loading(false);
+}
+function showRooms() {
+  banner(null); $('who').innerHTML = '';
+  $('rooms').innerHTML = S.rooms.map(r => `<button class="tile" onclick="pickRoom('${esc(r)}')">${esc(roomName(r))}</button>`).join('');
+  show('v-room');
+}
+async function pickRoom(room, autoNo) {
+  loading(true); banner(null);
+  try {
+    S.room = room; S.students = await run('getStudents', room); store('room', room);
+    $('roomLabel').textContent = roomName(room);
+    const s = autoNo && S.students.find(x => String(x.no) === String(autoNo));
+    if (s) await pickStudent(s.no);
+    else { $('search').value = ''; renderStudents(); show('v-name'); }
+  } catch (e) { banner(e); }
+  loading(false);
+}
+function renderStudents() {
+  const q = $('search').value.trim();
+  $('students').innerHTML = S.students.filter(s => !q || s.name.includes(q) || String(s.no) === q)
+    .map(s => `<button class="row" onclick="pickStudent('${esc(s.no)}')"><span class="no">${esc(s.no)}</span>${esc(s.name)}</button>`).join('')
+    || '<p class="muted">ไม่พบชื่อ</p>';
+}
+async function pickStudent(no) {
+  S.student = S.students.find(s => String(s.no) === String(no));
+  S.pin = (load('no') === String(no) && load('pin')) || null;
+  if (S.pin) await enter(); else await showPin();
+}
+async function showPin() {
+  loading(true);
+  try {
+    const st = await run('getAuthState', S.room, S.student.no);
+    S.first = !st.registered;
+    $('pinTitle').textContent = `${S.student.name} · เลขที่ ${S.student.no}`;
+    $('pinHelp').textContent = S.first ? 'เข้าใช้ครั้งแรก: กรอกเลขประจำตัวนักเรียน 2 ครั้ง' : 'กรอกเลขประจำตัวนักเรียนเพื่อยืนยันตัวตน';
+    $('pin1').value = ''; $('pin2').value = ''; $('pinMsg').textContent = '';
+    $('pin2').classList.toggle('hidden', !S.first);
+    $('pinBtn').textContent = S.first ? 'ลงทะเบียนและเข้าสู่ระบบ' : 'เข้าสู่ระบบ';
+    $('who').innerHTML = ''; show('v-pin');
+  } catch (e) { banner(e); }
+  loading(false);
+}
+async function doLogin() {
+  const p1 = $('pin1').value.replace(/\s/g, ''), p2 = $('pin2').value.replace(/\s/g, '');
+  if (!/^\d{4,10}$/.test(p1)) return ($('pinMsg').textContent = 'เลขประจำตัวต้องเป็นตัวเลข 4–10 หลัก');
+  if (S.first && p1 !== p2) return ($('pinMsg').textContent = 'เลขทั้งสองช่องไม่ตรงกัน');
+  loading(true);
+  try {
+    await run('login', S.room, S.student.no, p1);
+    S.pin = p1; store('no', S.student.no); store('pin', p1);
+    loading(false); await enter();
+  } catch (e) { loading(false); $('pinMsg').textContent = errText(e); }
+}
+async function enter() {
+  $('who').innerHTML = `<span>${esc(S.student.name)} · ${esc(roomName(S.room))} เลขที่ ${esc(S.student.no)}</span>
+    <button class="link light" onclick="logout()">ออกจากระบบ</button>`;
+  await loadExams();
+}
+function logout() {
+  if (S.ex && !confirmLeave()) return;
+  S.ex = null;
+  store('no', null); store('pin', null); S.student = null; S.pin = null;
+  $('who').innerHTML = ''; $('search').value = ''; renderStudents(); show('v-name');
+}
+function authFail() { store('pin', null); S.pin = null; S.ex = null; showPin(); }
+
+/* ---------- รายการข้อสอบ ---------- */
+async function loadExams() {
+  S.ex = null; Guard.stop(); loading(true); banner(null);
+  try { S.exams = await run('getExams', S.room, S.student.no, S.pin); renderExams(); show('v-list'); }
+  catch (e) { loading(false); if (isAuth(e)) return authFail(); banner(e); }
+  loading(false);
+}
+function renderExams() {
+  $('exams').innerHTML = S.exams.length ? S.exams.map(e => {
+    const left = e.attempts - e.used;
+    let btn;
+    if (e.inProgress) btn = `<button class="btn" onclick="start('${esc(e.id)}')">ทำต่อ</button>`;
+    else if (e.locked) btn = `<button class="btn" disabled>ถูกล็อก · ติดต่อครู</button>`;
+    else if (!e.count) btn = `<button class="btn" disabled>ยังไม่มีข้อสอบ</button>`;
+    else if (left <= 0) btn = `<button class="btn" disabled>ทำครบ ${e.attempts} ครั้งแล้ว</button>`;
+    else btn = `<button class="btn${e.done ? ' ghost' : ''}" onclick="start('${esc(e.id)}')">${e.done ? `ทำอีกครั้ง (เหลือ ${left} ครั้ง)` : 'เริ่มทำข้อสอบ'}</button>`;
+    return `<article class="card">
+      <h3>${esc(e.title)}</h3>
+      <div class="meta">
+        <span class="chip">${e.count} ข้อ</span><span class="chip">${e.full} คะแนน</span>
+        <span class="chip">ทำได้ ${e.attempts} ครั้ง</span>
+        ${e.proctor ? '<span class="chip">ป้องกันทุจริต</span>' : ''}
+        ${e.locked ? '<span class="chip r">ถูกล็อก</span>' : e.inProgress ? '<span class="chip a">ทำค้างไว้</span>' : e.done ? `<span class="chip g">ทำแล้ว ${e.done} ครั้ง</span>` : ''}
+      </div>
+      ${e.best !== null ? `<div class="best"><span>คะแนนที่ดีที่สุด</span><span><b>${e.best}</b> / ${e.full}</span></div>` : ''}
+      ${btn}
+    </article>`;
+  }).join('') : '<div class="empty">ตอนนี้ยังไม่มีข้อสอบที่เปิดให้ทำ</div>';
+}
+
+/* ---------- ทำข้อสอบ ---------- */
+const draftKey = () => `exam:${S.room}:${S.student.no}:${S.ex.id}:${S.ex.attempt}`;
+function start(id) {
+  const e = S.exams.find(x => x.id === id);
+  S.pendingId = id;
+  if (e && e.proctor) { $('ruTitle').textContent = e.title; show('v-rules'); return; }
+  openExam(id);
+}
+function begin() { Guard.enterFullscreen(); openExam(S.pendingId); }   // ต้องขอเต็มจอทันทีตอนกดปุ่ม
+async function openExam(id) {
+  loading(true); banner(null);
+  try {
+    S.ex = await run('startExam', S.room, S.student.no, S.pin, id);
+    S.ans = Object.assign({}, S.ex.answers || {}, JSON.parse(load(draftKey()) || '{}'));
+    renderExam(); show('v-exam');
+    if (S.ex.proctor) Guard.start(S.ex.violations || 0, S.ex.limit || 2); else Guard.stop();
+  } catch (e) { loading(false); Guard.stop(); if (isAuth(e)) return authFail(); banner(e); S.ex = null; show('v-list'); }
+  loading(false);
+}
+function renderExam() {
+  $('exTitle').textContent = S.ex.title + (S.ex.attempts > 1 ? ` · ครั้งที่ ${S.ex.attempt}` : '');
+  $('exForm').innerHTML = S.ex.questions.map((q, i) => `
+    <fieldset class="q" id="q${i}">
+      <legend><span>${i + 1}.</span>${esc(q.text)}</legend>
+      ${q.choices.map((c, j) => `<label class="choice"><input type="radio" name="q${i}" value="${esc(c)}"
+          ${S.ans[q.uid] === c ? 'checked' : ''} onchange="pick(${i})"><span class="cl">${LABELS[j]}</span><span>${esc(c)}</span></label>`).join('')}
+    </fieldset>`).join('');
+  $('confirm').classList.add('hidden');
+  progress();
+}
+function pick(i) {
+  const q = S.ex.questions[i];
+  const r = document.querySelector(`input[name="q${i}"]:checked`);
+  if (r) S.ans[q.uid] = r.value;
+  $('q' + i).classList.remove('miss');
+  store(draftKey(), JSON.stringify(S.ans));
+  $('confirm').classList.add('hidden');
+  progress();
+}
+function progress() {
+  const n = S.ex.questions.length, done = S.ex.questions.filter(q => S.ans[q.uid]).length;
+  $('exCount').textContent = `ตอบแล้ว ${done}/${n}`;
+  $('exFill').style.width = (n ? done / n * 100 : 0) + '%';
+}
+function trySubmit() {
+  S.missing = S.ex.questions.map((q, i) => S.ans[q.uid] ? -1 : i).filter(i => i >= 0);
+  document.querySelectorAll('fieldset.q').forEach(f => f.classList.remove('miss'));
+  if (!S.missing.length) return sendExam();
+  S.missing.forEach(i => $('q' + i).classList.add('miss'));
+  const list = S.missing.slice(0, 8).map(i => i + 1).join(', ') + (S.missing.length > 8 ? ' …' : '');
+  $('confirmText').textContent = `ยังไม่ได้ตอบ ${S.missing.length} ข้อ (ข้อ ${list}) ข้อที่ไม่ตอบจะนับเป็นผิด`;
+  $('confirm').classList.remove('hidden');
+  $('confirm').scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+function goMissing() { if (S.missing.length) $('q' + S.missing[0]).scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+async function sendExam() {
+  if (S.sending) return;
+  S.sending = true; $('sendBtn').disabled = true; loading(true);
+  Guard.pause();
+  try {
+    const r = await run('submitExam', S.room, S.student.no, S.pin, S.ex.id, S.ans);
+    store(draftKey(), null);
+    S.ex = null; Guard.stop();
+    const pct = r.full ? r.score / r.full * 100 : 0;
+    $('ring').style.background = `conic-gradient(var(--brand) ${pct}%, #e4ebe7 0)`;
+    $('rScore').textContent = r.score;
+    $('rFull').textContent = `จาก ${r.full} คะแนน`;
+    $('rDetail').textContent = `ตอบถูก ${r.correct} จาก ${r.total} ข้อ`;
+    $('rBest').textContent = (r.best !== null && r.best !== r.score ? `คะแนนที่ดีที่สุด ${r.best} · ` : '') +
+      (r.left > 0 ? `ทำได้อีก ${r.left} ครั้ง` : 'ครบจำนวนครั้งที่ทำได้แล้ว');
+    show('v-result');
+  } catch (e) {
+    if (isAuth(e)) { loading(false); Guard.stop(); return authFail(); }
+    Guard.resumeWatch(); banner(e); window.scrollTo(0, 0);
+  } finally { S.sending = false; $('sendBtn').disabled = false; loading(false); }
+}
+function confirmLeave() { return !S.ex || confirm('ยังไม่ได้ส่งข้อสอบ ออกจากหน้านี้ไหม? (คำตอบที่เลือกไว้ยังเก็บอยู่ในเครื่อง)'); }
+window.addEventListener('beforeunload', e => { if (S.ex && (Guard.on || Object.keys(S.ans).length)) { e.preventDefault(); e.returnValue = ''; } });
+
+/* =====================================================================
+ *  ระบบป้องกันทุจริต
+ *  ตรวจจับ: สลับแอป/แท็บ/ย่อจอ (visibility), ไปหน้าต่างอื่น (blur), ออกจากเต็มจอ,
+ *           แบ่งจอ/หน้าต่างลอย (ขนาดจอหดผิดปกติ), กด PrintScreen, สั่งพิมพ์, ปิด/รีเฟรชหน้า
+ *  ครั้งแรกเตือน ครั้งที่ 2 เซิร์ฟเวอร์ล็อกและส่งคำตอบ (เก็บนับในชีท รีเฟรชก็ไม่รีเซ็ต)
+ * ===================================================================== */
+const Guard = {
+  on: false, paused: false, count: 0, limit: 2, last: 0, blurAt: 0, hiddenAt: 0, base: null, fsWanted: false, busy: false,
+
+  fsEl() { return document.fullscreenElement || document.webkitFullscreenElement; },
+  canFs() { const d = document.documentElement; return !!(d.requestFullscreen || d.webkitRequestFullscreen); },
+  enterFullscreen() {
+    const d = document.documentElement;
+    try { const p = (d.requestFullscreen || d.webkitRequestFullscreen).call(d, { navigationUI: 'hide' }); if (p && p.catch) p.catch(() => {}); } catch (e) {}
+  },
+  exitFullscreen() { try { (document.exitFullscreen || document.webkitExitFullscreen).call(document); } catch (e) {} },
+
+  start(count, limit) {
+    this.on = true; this.paused = false; this.count = count; this.limit = limit; this.last = 0;
+    this.fsWanted = this.canFs();
+    if (this.fsWanted && !this.fsEl()) this.enterFullscreen();
+    document.body.classList.add('noselect');
+    this.watermark(true);
+    setTimeout(() => this.baseline(), 900);
+    this.pill();
+  },
+  stop() {
+    this.on = false; this.paused = false;
+    document.body.classList.remove('noselect');
+    this.watermark(false);
+    $('guard').classList.add('hidden'); $('warn').classList.add('hidden');
+    if (this.fsEl()) this.exitFullscreen();
+  },
+  pause() { this.paused = true; },
+  resumeWatch() { this.paused = false; this.baseline(); },
+  baseline() { this.base = { w: window.innerWidth, h: window.innerHeight, land: window.innerWidth > window.innerHeight }; },
+  pill() {
+    $('guard').classList.remove('hidden');
+    $('guard').classList.toggle('warned', this.count > 0);
+    $('guardText').textContent = this.count > 0 ? `ถูกเตือนแล้ว ${this.count} ครั้ง · อีกครั้งจะถูกล็อก` : 'ระบบป้องกันทุจริตเปิดอยู่';
+  },
+  watermark(show) {
+    const w = $('watermark');
+    if (!show) return w.classList.add('hidden');
+    const t = `${S.student.name} · ${roomName(S.room)} เลขที่ ${S.student.no}`;
+    w.innerHTML = Array.from({ length: 60 }, () => `<span>${esc(t)}</span>`).join('');
+    w.classList.remove('hidden');
+  },
+
+  /* เรียกเมื่อตรวจพบ: กันนับซ้ำจากเหตุการณ์เดียวที่ยิงหลายสัญญาณ */
+  async flag(type) {
+    if (!this.on || this.paused || this.busy || !S.ex) return;
+    if (!$('warn').classList.contains('hidden')) return;
+    const now = Date.now();
+    if (now - this.last < 4000) return;
+    this.last = now; this.busy = true;
+    let r;
+    try { r = await run('reportViolation', S.room, S.student.no, S.pin, S.ex.id, type, S.ans); }
+    catch (e) { r = { count: this.count + 1, locked: this.count + 1 >= this.limit, offline: true }; }
+    this.busy = false;
+    this.count = r.count || this.count + 1;
+    if (r.locked) return this.lockOut(type, r.result);
+    $('warnTitle').textContent = `คำเตือน ครั้งที่ ${this.count}`;
+    $('warnWhy').textContent = type;
+    $('warn').classList.remove('hidden');
+    this.pill();
+  },
+  lockOut(type, res) {
+    store(draftKey(), null);
+    S.ex = null; this.stop();
+    $('lkWhy').textContent = type;
+    $('lkScore').textContent = res ? `ตอบถูก ${res.correct} จาก ${res.total} ข้อ · ได้ ${res.score} / ${res.full} คะแนน` : '';
+    show('v-locked');
+  },
+
+  init() {
+    document.addEventListener('visibilitychange', () => {
+      if (!this.on) return;
+      if (document.hidden) this.hiddenAt = Date.now();
+      else if (this.hiddenAt) { this.hiddenAt = 0; this.flag('สลับแอป เปลี่ยนแท็บ หรือย่อหน้าจอ'); }
+    });
+    window.addEventListener('blur', () => { if (this.on) this.blurAt = Date.now(); });
+    window.addEventListener('focus', () => {
+      if (!this.on || !this.blurAt) return;
+      const away = Date.now() - this.blurAt; this.blurAt = 0;
+      if (away > 1500) this.flag('ออกไปใช้หน้าต่างอื่น');
+    });
+    const onFs = () => { if (this.on && this.fsWanted && !this.fsEl()) this.flag('ออกจากโหมดเต็มจอ'); };
+    document.addEventListener('fullscreenchange', onFs);
+    document.addEventListener('webkitfullscreenchange', onFs);
+    window.addEventListener('resize', () => {
+      if (!this.on || !this.base || this.paused) return;
+      const land = window.innerWidth > window.innerHeight;
+      if (land !== this.base.land) { setTimeout(() => this.baseline(), 700); return; }   // หมุนจอ ไม่นับ
+      if (window.innerWidth < this.base.w * 0.8 || window.innerHeight < this.base.h * 0.62) this.flag('แบ่งหน้าจอหรือเปิดหน้าต่างซ้อน');
+    });
+    document.addEventListener('keyup', e => {
+      if (!this.on) return;
+      if (e.key === 'PrintScreen' || e.key === 'Snapshot') {
+        try { navigator.clipboard && navigator.clipboard.writeText(''); } catch (x) {}
+        this.flag('กดแคปหน้าจอ');
+      }
+    });
+    document.addEventListener('keydown', e => {
+      if (!this.on) return;
+      const k = (e.key || '').toLowerCase();
+      if ((e.ctrlKey || e.metaKey) && ['p', 'c', 's', 'u'].includes(k)) e.preventDefault();
+      if (e.metaKey && e.shiftKey && ['3', '4', '5', 's'].includes(k)) this.flag('กดแคปหน้าจอ');
+    });
+    window.addEventListener('beforeprint', () => this.flag('สั่งพิมพ์หน้าข้อสอบ'));
+    ['copy', 'cut', 'contextmenu', 'dragstart'].forEach(ev => document.addEventListener(ev, e => { if (this.on) e.preventDefault(); }));
+    // ปิด/รีเฟรชหน้าระหว่างสอบ: ส่งรายงานแบบ beacon (ทำงานแม้หน้าถูกปิด)
+    window.addEventListener('pagehide', () => {
+      if (!this.on || !S.ex || this.paused) return;
+      try { navigator.sendBeacon(API_URL, JSON.stringify({ action: 'reportViolation',
+        args: [S.room, S.student.no, S.pin, S.ex.id, 'ปิดหรือรีเฟรชหน้าข้อสอบ', S.ans] })); } catch (e) {}
+    });
+  }
+};
+Guard.init();
+function resume() {
+  $('warn').classList.add('hidden');
+  if (Guard.fsWanted && !Guard.fsEl()) Guard.enterFullscreen();
+  Guard.last = Date.now();
+  setTimeout(() => Guard.baseline(), 900);
+}
+
+init();
+</script>
+</body>
+</html>
