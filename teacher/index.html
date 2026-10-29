@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#1f4d3a">
+<meta name="robots" content="noindex">
+<title>หน้าจัดการของครู</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Anuphan:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#f4f6f5; --card:#fff; --ink:#18241e; --text:#3c4741; --muted:#6c7771; --line:#e2e8e4; --line2:#eef2f0;
+    --brand:#2f6b52; --brand-dark:#1f4d3a; --soft:#e8f3ed;
+    --blue:#2f6db3; --blue-soft:#e7f0fb;
+    --amber:#9a5800; --amber-soft:#fff1dc; --red:#b3261e; --red-soft:#fce8e6;
+  }
+  *{box-sizing:border-box;margin:0}
+  body{font-family:'Anuphan',system-ui,sans-serif;background:var(--bg);color:var(--ink);font-size:15px;line-height:1.55;-webkit-font-smoothing:antialiased}
+  button,input,select,textarea{font:inherit;color:inherit}
+  .hidden{display:none!important}
+  .wrap{max-width:1120px;margin:0 auto;padding:0 20px}
+  .muted{color:var(--muted)}
+  a{color:var(--brand)}
+
+  /* ---------- top bar ---------- */
+  .top{background:var(--brand-dark);color:#fff}
+  .top .wrap{display:flex;align-items:center;gap:14px;min-height:60px;flex-wrap:wrap;padding-top:8px;padding-bottom:8px}
+  .brand{display:flex;align-items:center;gap:10px;font-weight:600;font-size:17px;margin-right:auto}
+  .brand span{width:32px;height:32px;border-radius:10px;background:rgba(255,255,255,.14);display:grid;place-items:center}
+  .brand svg{width:18px;height:18px}
+  .top-btn{background:rgba(255,255,255,.12);border:0;color:#fff;padding:7px 14px;border-radius:10px;cursor:pointer;font-size:14px;display:inline-flex;align-items:center;gap:6px}
+  .top-btn:hover{background:rgba(255,255,255,.2)}
+  .top-btn svg{width:16px;height:16px}
+
+  /* ---------- tabs ---------- */
+  .tabs-bar{background:var(--card);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:5}
+  .tabs{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none}
+  .tabs::-webkit-scrollbar{display:none}
+  .tab{flex:none;background:none;border:0;padding:14px 16px 12px;cursor:pointer;color:var(--muted);font-weight:500;border-bottom:2.5px solid transparent;white-space:nowrap}
+  .tab:hover{color:var(--ink)}
+  .tab.on{color:var(--brand);border-bottom-color:var(--brand)}
+  .tab small{font-weight:400;margin-left:4px;color:var(--muted)}
+
+  main.wrap{padding-top:24px;padding-bottom:80px}
+  .head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:16px}
+  .head h1{font-size:24px;font-weight:600;line-height:1.25}
+  .head p{color:var(--muted)}
+  h2.sec{font-size:17px;font-weight:600;margin:28px 0 12px;display:flex;align-items:center;gap:10px}
+  h2.sec .count{font-size:13px;font-weight:500;color:var(--muted);background:var(--line2);padding:1px 9px;border-radius:999px}
+
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;border:0;border-radius:12px;padding:10px 16px;font-weight:500;cursor:pointer;background:var(--brand);color:#fff;transition:background .15s}
+  .btn:hover{background:var(--brand-dark)}
+  .btn svg{width:17px;height:17px}
+  .btn.ghost{background:var(--soft);color:var(--brand-dark)}
+  .btn.ghost:hover{background:#dcece3}
+  .btn.plain{background:transparent;color:var(--text)}
+  .btn.plain:hover{background:var(--line2)}
+  .btn.danger{background:var(--red-soft);color:var(--red)}
+  .btn.danger:hover{background:#f8d7d3}
+  .btn:disabled{opacity:.55;cursor:not-allowed}
+  .btn.sm{padding:6px 12px;font-size:14px;border-radius:10px}
+
+  /* ---------- switch ---------- */
+  .switch{display:inline-flex;align-items:center;gap:9px;background:none;border:0;cursor:pointer;padding:4px 0;color:var(--text);font-size:14px;white-space:nowrap}
+  .switch i{position:relative;flex:none;width:38px;height:22px;border-radius:999px;background:#cfd8d3;transition:background .18s}
+  .switch i::after{content:"";position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.2);transition:transform .18s}
+  .switch[aria-checked="true"] i{background:var(--brand)}
+  .switch[aria-checked="true"] i::after{transform:translateX(16px)}
+  .switch:focus-visible{outline:2px solid var(--brand);outline-offset:3px;border-radius:8px}
+  .switch b{font-weight:500;min-width:28px}
+  .switch[aria-checked="false"] b{color:var(--muted)}
+
+  /* ---------- room cards ---------- */
+  .rooms{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px}
+  .room{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:16px 18px;display:flex;flex-direction:column;gap:10px}
+  .room-top{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+  .room-top h3{font-size:20px;font-weight:600}
+  .room-top button{background:none;border:0;color:var(--brand);cursor:pointer;font-size:14px;padding:0}
+  .room-top button:hover{text-decoration:underline}
+  .room .facts{display:flex;gap:14px;font-size:13px;color:var(--muted)}
+  .room .facts b{color:var(--ink);font-weight:600;font-size:15px;margin-right:3px}
+  .room .sw{display:flex;flex-direction:column;gap:2px;border-top:1px solid var(--line2);padding-top:8px}
+
+  /* ---------- task list ---------- */
+  .tbl{background:var(--card);border:1px solid var(--line);border-radius:18px;overflow:hidden}
+  .trow{display:grid;grid-template-columns:minmax(0,2.3fr) minmax(0,1.1fr) minmax(0,1.6fr) auto;gap:16px;align-items:center;padding:14px 18px;border-top:1px solid var(--line2)}
+  .trow:first-child{border-top:0}
+  .trow.thead{background:#f9fbfa;font-size:12.5px;color:var(--muted);font-weight:500;padding-top:10px;padding-bottom:10px}
+  .t-title{display:flex;flex-direction:column;gap:3px;min-width:0}
+  .t-title b{font-weight:600;font-size:15.5px;overflow-wrap:anywhere}
+  .t-tags{display:flex;flex-wrap:wrap;gap:5px;align-items:center}
+  .tag{font-size:12px;font-weight:500;padding:1px 8px;border-radius:999px;background:var(--line2);color:var(--text);white-space:nowrap}
+  .tag.id{font-family:ui-monospace,Menlo,monospace;font-size:11.5px;background:#eef1f8;color:#3e4a6b}
+  .tag.g{background:var(--soft);color:var(--brand)}
+  .tag.b{background:var(--blue-soft);color:var(--blue)}
+  .tag.a{background:var(--amber-soft);color:var(--amber)}
+  .tag.r{background:var(--red-soft);color:var(--red)}
+  .t-due{font-size:13.5px;color:var(--text)}
+  .t-due.past{color:var(--red)}
+  .prog{display:flex;flex-direction:column;gap:5px;min-width:0}
+  .prog-top{display:flex;justify-content:space-between;font-size:13px;gap:8px}
+  .prog-top b{font-weight:600}
+  .bar{height:7px;background:var(--line2);border-radius:99px;overflow:hidden;display:flex}
+  .bar span{height:100%}
+  .bar .ok{background:var(--brand)} .bar .late{background:#e0a33a}
+  .prog small{font-size:12px;color:var(--muted)}
+  .t-act{display:flex;align-items:center;gap:6px;justify-content:flex-end}
+  .iconbtn{width:34px;height:34px;border-radius:10px;border:0;background:transparent;display:grid;place-items:center;cursor:pointer;color:var(--muted)}
+  .iconbtn:hover{background:var(--line2);color:var(--ink)}
+  .iconbtn svg{width:18px;height:18px}
+  .empty{padding:36px 18px;text-align:center;color:var(--muted)}
+  .filters{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+  .filters input,.filters select{border:1px solid var(--line);background:#fff;border-radius:10px;padding:8px 12px}
+  .filters input{flex:1;min-width:200px}
+
+  @media (max-width:820px){
+    .trow{grid-template-columns:minmax(0,1fr) auto;row-gap:10px}
+    .trow.thead{display:none}
+    .t-due{grid-column:1/-1;order:3}
+    .prog{grid-column:1/-1;order:4}
+    .t-act{order:2;grid-row:1;grid-column:2}
+  }
+
+  /* ---------- editor drawer ---------- */
+  .scrim{position:fixed;inset:0;background:rgba(18,28,23,.45);z-index:20;display:flex;justify-content:flex-end}
+  .drawer{background:var(--card);width:min(640px,100%);height:100%;display:flex;flex-direction:column;box-shadow:-20px 0 40px -20px rgba(0,0,0,.3)}
+  .drawer-head{display:flex;align-items:center;gap:10px;padding:16px 20px;border-bottom:1px solid var(--line)}
+  .drawer-head h2{font-size:18px;font-weight:600;margin-right:auto}
+  .drawer-body{flex:1;overflow:auto;padding:20px;display:flex;flex-direction:column;gap:16px}
+  .drawer-foot{display:flex;gap:10px;padding:14px 20px;border-top:1px solid var(--line);background:#fafbfb}
+  .drawer-foot .spacer{flex:1}
+  .field{display:flex;flex-direction:column;gap:6px}
+  .field > label,.field > span{font-size:13.5px;font-weight:500;color:var(--text)}
+  .field small{font-size:12.5px;color:var(--muted)}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media (max-width:520px){.row2{grid-template-columns:1fr}}
+  .inp{width:100%;border:1px solid var(--line);border-radius:11px;padding:9px 12px;background:#fff}
+  .inp:focus{outline:2px solid var(--brand);outline-offset:-1px;border-color:transparent}
+  textarea.inp{resize:vertical;min-height:70px}
+  .seg{display:flex;background:var(--line2);border-radius:12px;padding:3px;gap:3px}
+  .seg button{flex:1;border:0;background:transparent;padding:8px;border-radius:9px;cursor:pointer;color:var(--muted);font-weight:500}
+  .seg button[aria-pressed="true"]{background:#fff;color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.08)}
+  .chips{display:flex;flex-wrap:wrap;gap:7px}
+  .chip{border:1px solid var(--line);background:#fff;border-radius:999px;padding:5px 13px;cursor:pointer;font-size:14px}
+  .chip[aria-pressed="true"]{background:var(--brand);border-color:var(--brand);color:#fff}
+  .err{background:var(--red-soft);color:var(--red);border-radius:12px;padding:10px 14px;font-size:14px}
+
+  .qbox{border:1px solid var(--line);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:10px;background:#fbfcfb}
+  .qhead{display:flex;align-items:center;gap:8px}
+  .qhead b{font-weight:600}
+  .qhead .seg{margin-left:auto;font-size:13px}
+  .qhead .seg button{padding:4px 10px;white-space:nowrap;flex:none}
+  .opt{display:flex;align-items:center;gap:8px}
+  .opt label.key{display:flex;align-items:center;gap:6px;cursor:pointer;flex:none}
+  .opt .lbl{width:26px;height:26px;border-radius:8px;background:#eef2f0;display:grid;place-items:center;font-weight:600;font-size:13px;color:var(--muted)}
+  .opt input[type=radio]{accent-color:var(--brand);width:16px;height:16px}
+  .opt input[type=radio]:checked + .lbl{background:var(--brand);color:#fff}
+  .qfoot{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:13.5px}
+  .qfoot .inp{width:80px;padding:6px 10px}
+  .note-box{background:#f6f8f7;border-radius:12px;padding:10px 14px;font-size:13.5px;color:var(--text)}
+
+  /* ---------- login ---------- */
+  .login{min-height:100vh;display:grid;place-items:center;padding:20px}
+  .login-card{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:30px 26px;width:100%;max-width:380px;text-align:center}
+  .login-card .ico{width:56px;height:56px;border-radius:18px;background:var(--soft);color:var(--brand);display:grid;place-items:center;margin:0 auto 14px}
+  .login-card .ico svg{width:26px;height:26px}
+  .login-card h1{font-size:21px;font-weight:600}
+  .login-card p{color:var(--muted);margin:4px 0 18px;font-size:14px}
+  .login-card .inp{text-align:center;font-size:17px;padding:12px;margin-bottom:10px}
+  .login-card .btn{width:100%;padding:12px}
+  #loginMsg{min-height:20px;color:var(--red);font-size:14px;margin-bottom:8px}
+
+  .toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:11px 18px;border-radius:12px;z-index:40;font-size:14px;max-width:90vw;text-align:center;box-shadow:0 8px 24px -8px rgba(0,0,0,.4)}
+  .toast.bad{background:var(--red)}
+  #loading{position:fixed;inset:0;background:rgba(244,246,245,.6);display:grid;place-items:center;z-index:30;color:var(--brand);font-weight:500}
+</style>
+</head>
+<body>
+
+<!-- ===== เข้าสู่ระบบ ===== -->
+<section id="v-login" class="login hidden">
+  <form class="login-card" onsubmit="event.preventDefault();doLogin()">
+    <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></div>
+    <h1>หน้าจัดการของครู</h1>
+    <p>ห้องเรียนชีววิทยา ม.4</p>
+    <label for="pw" class="hidden">รหัสผ่านครู</label>
+    <input id="pw" class="inp" type="password" autocomplete="current-password" placeholder="รหัสผ่านครู">
+    <div id="loginMsg"></div>
+    <button class="btn" type="submit">เข้าสู่ระบบ</button>
+  </form>
+</section>
+
+<!-- ===== หน้าหลัก ===== -->
+<section id="v-app" class="hidden">
+  <div class="top">
+    <div class="wrap">
+      <div class="brand"><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 21h18"/><path d="M5 21V7l7-4 7 4v14"/><path d="M9 21v-6h6v6"/></svg></span>หน้าจัดการของครู</div>
+      <button class="top-btn" onclick="refresh()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/></svg>รีเฟรช</button>
+      <a class="top-btn" href="../" target="_blank" rel="noopener" style="text-decoration:none">ดูหน้านักเรียน</a>
+      <button class="top-btn" onclick="logout()">ออกจากระบบ</button>
+    </div>
+  </div>
+  <div class="tabs-bar"><div class="wrap"><nav id="tabs" class="tabs" aria-label="เลือกห้อง"></nav></div></div>
+  <main class="wrap" id="content"></main>
+</section>
+
+<!-- ===== ฟอร์มเพิ่ม/แก้ไขงาน ===== -->
+<div id="editor" class="scrim hidden" onclick="if(event.target===this)closeEditor()">
+  <aside class="drawer" role="dialog" aria-modal="true" aria-labelledby="edTitle">
+    <div class="drawer-head">
+      <h2 id="edTitle">เพิ่มงาน</h2>
+      <button class="iconbtn" onclick="closeEditor()" aria-label="ปิด"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
+    </div>
+    <div class="drawer-body" id="edBody"></div>
+    <div class="drawer-foot">
+      <button id="edDelete" class="btn danger" onclick="deleteTask()">ลบงาน</button>
+      <span class="spacer"></span>
+      <button class="btn plain" onclick="closeEditor()">ยกเลิก</button>
+      <button id="edSave" class="btn" onclick="saveTask()">บันทึก</button>
+    </div>
+  </aside>
+</div>
+
+<div id="loading" class="hidden">กำลังโหลด…</div>
+
+<script src="../config.js"></script>
+<script>
+const LABELS = ['ก', 'ข', 'ค', 'ง', 'จ'];
+const ICON = {
+  edit: '<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/>',
+  plus: '<path d="M12 5v14"/><path d="M5 12h14"/>',
+  trash: '<path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/>',
+  up: '<path d="m18 15-6-6-6 6"/>', down: '<path d="m6 9 6 6 6-6"/>'
+};
+const svg = (n, w = 2) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICON[n]}</svg>`;
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const roomName = r => 'ม.' + String(r).replace('-', '/');
+const errText = e => String((e && e.message) || e).replace(/^(Exception|Error):\s*/, '').replace('AUTH:', '');
+const store = (k, v) => { try { v == null ? sessionStorage.removeItem(k) : sessionStorage.setItem(k, v); } catch (e) {} };
+const load = k => { try { return sessionStorage.getItem(k); } catch (e) { return null; } };
+const loading = on => $('loading').classList.toggle('hidden', !on);
+function toast(t, bad) { const d = document.createElement('div'); d.className = 'toast' + (bad ? ' bad' : ''); d.textContent = t; document.body.appendChild(d); setTimeout(() => d.remove(), bad ? 5000 : 2600); }
+
+const A = { token: load('adminToken'), data: null, tab: 'all', q: '', type: 'all', ed: null };
+
+async function run(action, ...args) {
+  let res;
+  try { res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action, args }) }); }
+  catch (e) { throw new Error('เชื่อมต่อเซิร์ฟเวอร์ไม่ได้'); }
+  const out = await res.json().catch(() => null);
+  if (!out) throw new Error('เซิร์ฟเวอร์ตอบกลับผิดรูปแบบ');
+  if (!out.ok) {
+    if (String(out.error).includes('AUTH:')) { logout(true); throw new Error('หมดเวลาเข้าสู่ระบบ กรุณาเข้าใหม่'); }
+    throw new Error(out.error);
+  }
+  return out.data;
+}
+
+/* ---------- login ---------- */
+async function doLogin() {
+  const pw = $('pw').value;
+  if (!pw) return;
+  loading(true); $('loginMsg').textContent = '';
+  try { const r = await run('adminLogin', pw); A.token = r.token; store('adminToken', r.token); $('pw').value = ''; await refresh(); }
+  catch (e) { $('loginMsg').textContent = errText(e); }
+  loading(false);
+}
+function logout(silent) {
+  A.token = null; A.data = null; store('adminToken', null);
+  $('v-app').classList.add('hidden'); $('editor').classList.add('hidden'); $('v-login').classList.remove('hidden');
+  if (!silent) $('pw').focus();
+}
+async function refresh() {
+  if (!A.token) return logout(true);
+  loading(true);
+  try {
+    A.data = await run('adminData', A.token);
+    $('v-login').classList.add('hidden'); $('v-app').classList.remove('hidden');
+    render();
+  } catch (e) { if (A.token) toast(errText(e), true); }
+  loading(false);
+}
+
+/* ---------- helpers ---------- */
+const appliesTo = (roomsStr, room) => { const r = String(roomsStr || '').split(',').map(s => s.trim()).filter(Boolean); return !r.length || r.some(x => x.toUpperCase() === 'ALL' || x === room); };
+const roomsLabel = s => { const r = String(s || '').split(',').map(x => x.trim()).filter(Boolean); return !r.length || r.some(x => x.toUpperCase() === 'ALL') ? 'ทุกห้อง' : r.map(roomName).join(', '); };
+const studentsOf = room => (A.data.rooms.find(r => r.room === room) || {}).students || 0;
+const statOf = (room, id) => (A.data.stats[room] || {})[id] || { sent: 0, late: 0, graded: 0 };
+const isPast = due => due && due < A.data.now;
+function sw(checked, onclick, label) {
+  return `<button class="switch" role="switch" aria-checked="${checked}" onclick="${onclick}"><i></i><b>${checked ? 'เปิด' : 'ปิด'}</b>${label ? `<span>${label}</span>` : ''}</button>`;
+}
+function setTab(t) { A.tab = t; render(); window.scrollTo(0, 0); }
+
+/* ---------- render ---------- */
+function render() {
+  const d = A.data;
+  $('tabs').innerHTML = [`<button class="tab ${A.tab === 'all' ? 'on' : ''}" onclick="setTab('all')">ภาพรวม</button>`]
+    .concat(d.rooms.map(r => `<button class="tab ${A.tab === r.room ? 'on' : ''}" onclick="setTab('${esc(r.room)}')">${esc(roomName(r.room))}<small>${r.students}</small></button>`)).join('');
+  $('content').innerHTML = A.tab === 'all' ? renderAll() : renderRoom(A.tab);
+}
+
+function renderAll() {
+  const d = A.data;
+  const rooms = d.rooms.map(r => {
+    const open = d.tasks.filter(t => t.open && appliesTo(t.rooms, r.room)).length;
+    return `<div class="room">
+      <div class="room-top"><h3>${esc(roomName(r.room))}</h3><button onclick="setTab('${esc(r.room)}')">ดูงานของห้อง →</button></div>
+      <div class="facts"><span><b>${r.students}</b>คน</span><span><b>${open}</b>งานที่เปิด</span></div>
+      <div class="sw">
+        ${sw(r.submit, `toggleRoom('${esc(r.room)}','submit',${!r.submit})`, 'ระบบส่งงาน')}
+        ${sw(r.exam, `toggleRoom('${esc(r.room)}','exam',${!r.exam})`, 'ระบบสอบ')}
+      </div>
+    </div>`;
+  }).join('');
+  const q = A.q.trim().toLowerCase();
+  const list = d.tasks.filter(t => (A.type === 'all' || (A.type === 'open' ? t.open : A.type === 'closed' ? !t.open : t.type === A.type))
+    && (!q || (t.id + ' ' + t.title).toLowerCase().includes(q)));
+  return `
+    <div class="head"><div><h1>ภาพรวมทุกห้อง</h1><p>เปิด/ปิดระบบรายห้อง และจัดการงานทั้งหมด</p></div>
+      <button class="btn" onclick="openEditor()">${svg('plus')}เพิ่มงาน</button></div>
+    <div class="rooms">${rooms}</div>
+    <h2 class="sec">งานทั้งหมด <span class="count">${d.tasks.length}</span></h2>
+    <div class="filters">
+      <input type="search" placeholder="ค้นหารหัสหรือชื่องาน" value="${esc(A.q)}" oninput="A.q=this.value;renderListOnly()" aria-label="ค้นหางาน">
+      <select onchange="A.type=this.value;renderListOnly()" aria-label="กรองงาน">
+        ${[['all','ทุกงาน'],['open','เปิดอยู่'],['closed','ปิดอยู่'],['file','ส่งไฟล์'],['quiz','คำถาม']].map(([v,l]) => `<option value="${v}" ${A.type===v?'selected':''}>${l}</option>`).join('')}
+      </select>
+    </div>
+    <div id="allList">${taskTable(list, null)}</div>
+    ${examSection(null)}`;
+}
+function renderListOnly() {
+  const d = A.data, q = A.q.trim().toLowerCase();
+  const list = d.tasks.filter(t => (A.type === 'all' || (A.type === 'open' ? t.open : A.type === 'closed' ? !t.open : t.type === A.type))
+    && (!q || (t.id + ' ' + t.title).toLowerCase().includes(q)));
+  $('allList').innerHTML = taskTable(list, null);
+}
+
+function renderRoom(room) {
+  const d = A.data, r = d.rooms.find(x => x.room === room);
+  if (!r) { A.tab = 'all'; return renderAll(); }
+  const tasks = d.tasks.filter(t => appliesTo(t.rooms, room));
+  const pending = tasks.filter(t => t.open).reduce((s, t) => s + Math.max(0, r.students - statOf(room, t.id).sent), 0);
+  return `
+    <div class="head"><div><h1>${esc(roomName(room))}</h1><p>นักเรียน ${r.students} คน · งาน ${tasks.length} งาน · ค้างส่งรวม ${pending} ชิ้น (เฉพาะงานที่เปิด)</p></div>
+      <div style="display:flex;gap:18px;align-items:center;flex-wrap:wrap">
+        ${sw(r.submit, `toggleRoom('${esc(room)}','submit',${!r.submit})`, 'ระบบส่งงาน')}
+        ${sw(r.exam, `toggleRoom('${esc(room)}','exam',${!r.exam})`, 'ระบบสอบ')}
+        <button class="btn" onclick="openEditor(null,'${esc(room)}')">${svg('plus')}เพิ่มงานให้ห้องนี้</button>
+      </div></div>
+    ${!r.submit ? '<div class="note-box" style="margin-bottom:12px;background:var(--amber-soft);color:var(--amber)">ระบบส่งงานของห้องนี้ปิดอยู่ นักเรียนจะเข้าดูงานและส่งงานไม่ได้</div>' : ''}
+    <h2 class="sec">งานของห้องนี้ <span class="count">${tasks.length}</span></h2>
+    ${taskTable(tasks, room)}
+    ${examSection(room)}`;
+}
+
+function taskTable(list, room) {
+  if (!list.length) return `<div class="tbl"><div class="empty">ยังไม่มีงาน · กด "เพิ่มงาน" เพื่อเริ่ม</div></div>`;
+  const head = `<div class="trow thead"><span>งาน</span><span>กำหนดส่ง</span><span>${room ? 'การส่งงาน' : 'การส่งงาน (รวมทุกห้องที่ได้รับงาน)'}</span><span style="text-align:right">สถานะ</span></div>`;
+  return `<div class="tbl">${head}${list.map(t => {
+    const rooms = room ? [room] : A.data.rooms.map(r => r.room).filter(x => appliesTo(t.rooms, x));
+    const total = rooms.reduce((s, x) => s + studentsOf(x), 0);
+    const st = rooms.reduce((s, x) => { const v = statOf(x, t.id); return { sent: s.sent + v.sent, late: s.late + v.late, graded: s.graded + v.graded }; }, { sent: 0, late: 0, graded: 0 });
+    const okW = total ? (st.sent - st.late) / total * 100 : 0, lateW = total ? st.late / total * 100 : 0;
+    return `<div class="trow">
+      <div class="t-title">
+        <b>${esc(t.title)}</b>
+        <div class="t-tags">
+          <span class="tag id">${esc(t.id)}</span>
+          <span class="tag ${t.type === 'quiz' ? 'b' : 'g'}">${t.type === 'quiz' ? `คำถาม ${t.questions.length} ข้อ` : 'ส่งไฟล์'}</span>
+          <span class="tag">${esc(t.period)} · ${t.full} คะแนน</span>
+          ${room ? '' : `<span class="tag">${esc(roomsLabel(t.rooms))}</span>`}
+        </div>
+      </div>
+      <div class="t-due ${isPast(t.due) ? 'past' : ''}">${t.dueText ? esc(t.dueText) + (isPast(t.due) ? '<br><small>เลยกำหนดแล้ว</small>' : '') : '<span class="muted">ไม่มีกำหนด</span>'}</div>
+      <div class="prog">
+        <div class="prog-top"><span>ส่งแล้ว <b>${st.sent}</b>/${total}</span>${st.late ? `<span class="tag a">ส่งช้า ${st.late}</span>` : ''}</div>
+        <div class="bar"><span class="ok" style="width:${okW}%"></span><span class="late" style="width:${lateW}%"></span></div>
+        <small>ให้คะแนนแล้ว ${st.graded} · ยังไม่ส่ง ${Math.max(0, total - st.sent)}</small>
+      </div>
+      <div class="t-act">
+        ${sw(t.open, `toggleTask('${esc(t.id)}',${!t.open})`)}
+        <button class="iconbtn" onclick="openEditor('${esc(t.id)}')" aria-label="แก้ไข ${esc(t.title)}">${svg('edit')}</button>
+      </div>
+    </div>`;
+  }).join('')}</div>`;
+}
+
+function examSection(room) {
+  const ex = A.data.exams.filter(e => !room || appliesTo(e.rooms, room));
+  if (!ex.length) return '';
+  return `<h2 class="sec">ข้อสอบ <span class="count">${ex.length}</span></h2>
+    <div class="tbl"><div class="trow thead"><span>ชุดข้อสอบ</span><span>รูปแบบ</span><span>ทำแล้ว</span><span style="text-align:right">สถานะ</span></div>
+    ${ex.map(e => {
+      const rooms = room ? [room] : A.data.rooms.map(r => r.room).filter(x => appliesTo(e.rooms, x));
+      const total = rooms.reduce((s, x) => s + studentsOf(x), 0);
+      const st = rooms.reduce((s, x) => { const v = (A.data.examStats[x] || {})[e.id] || { done: 0, locked: 0 }; return { done: s.done + v.done, locked: s.locked + v.locked }; }, { done: 0, locked: 0 });
+      return `<div class="trow">
+        <div class="t-title"><b>${esc(e.title)}</b><div class="t-tags"><span class="tag id">${esc(e.id)}</span>${room ? '' : `<span class="tag">${esc(roomsLabel(e.rooms))}</span>`}${e.proctor ? '<span class="tag">ป้องกันทุจริต</span>' : ''}</div></div>
+        <div class="t-due">${e.count || e.bank} ข้อ (คลัง ${e.bank}) · ${e.full} คะแนน<br><small class="muted">ทำได้ ${e.attempts} ครั้ง</small></div>
+        <div class="prog"><div class="prog-top"><span>ทำแล้ว <b>${st.done}</b>/${total}</span>${st.locked ? `<span class="tag r">ถูกล็อก ${st.locked}</span>` : ''}</div>
+          <div class="bar"><span class="ok" style="width:${total ? st.done / total * 100 : 0}%"></span></div></div>
+        <div class="t-act">${sw(e.open, `toggleExam('${esc(e.id)}',${!e.open})`)}</div>
+      </div>`;
+    }).join('')}</div>
+    <p class="muted" style="font-size:13px;margin-top:8px">เพิ่มหรือแก้ข้อสอบได้ในชีท Exams และ ExamQuestions</p>`;
+}
+
+/* ---------- toggles (อัปเดตทันที ถ้าไม่สำเร็จจะย้อนกลับ) ---------- */
+async function toggle(apply, revert, call, msg) {
+  apply(); render();
+  try { await call(); toast(msg); }
+  catch (e) { revert(); render(); toast(errText(e), true); }
+}
+function toggleRoom(room, sys, open) {
+  const r = A.data.rooms.find(x => x.room === room);
+  toggle(() => r[sys] = open, () => r[sys] = !open, () => run('adminSetRoomSystem', A.token, room, sys, open),
+    `${open ? 'เปิด' : 'ปิด'}${sys === 'submit' ? 'ระบบส่งงาน' : 'ระบบสอบ'} ${roomName(room)} แล้ว`);
+}
+function toggleTask(id, open) {
+  const t = A.data.tasks.find(x => x.id === id);
+  toggle(() => t.open = open, () => t.open = !open, () => run('adminSetTaskStatus', A.token, id, open), `${open ? 'เปิด' : 'ปิด'}งาน ${id} แล้ว`);
+}
+function toggleExam(id, open) {
+  const e = A.data.exams.find(x => x.id === id);
+  toggle(() => e.open = open, () => e.open = !open, () => run('adminSetExamStatus', A.token, id, open), `${open ? 'เปิด' : 'ปิด'}ข้อสอบ ${id} แล้ว`);
+}
+
+/* ---------- editor ---------- */
+function nextId(prefix) {
+  const nums = A.data.tasks.map(t => t.id).filter(id => id.startsWith(prefix)).map(id => parseInt(id.slice(prefix.length), 10)).filter(n => !isNaN(n));
+  return prefix + String((nums.length ? Math.max(...nums) : 0) + 1).padStart(2, '0');
+}
+function openEditor(id, room) {
+  const t = id ? A.data.tasks.find(x => x.id === id) : null;
+  A.ed = t ? JSON.parse(JSON.stringify(t)) : {
+    id: nextId('W'), title: '', desc: '', rooms: room || 'ALL', period: A.data.periods[0], full: 10,
+    due: '', open: true, type: 'file', questions: []
+  };
+  A.ed.orig = t ? t.id : '';
+  A.ed.autoId = !t;
+  $('edTitle').textContent = t ? 'แก้ไขงาน' : 'เพิ่มงาน';
+  $('edDelete').classList.toggle('hidden', !t);
+  renderEditor();
+  $('editor').classList.remove('hidden');
+  setTimeout(() => { const f = $('f-title'); if (f) f.focus(); }, 50);
+}
+function closeEditor() { $('editor').classList.add('hidden'); A.ed = null; }
+
+function renderEditor() {
+  const e = A.ed, d = A.data;
+  const sel = String(e.rooms || '').split(',').map(s => s.trim()).filter(Boolean);
+  const all = !sel.length || sel.some(x => x.toUpperCase() === 'ALL');
+  const sent = e.orig ? d.rooms.reduce((s, r) => s + statOf(r.room, e.orig).sent, 0) : 0;
+  $('edBody').innerHTML = `
+    <div id="edErr" class="err hidden"></div>
+    <div class="field"><span>ประเภทงาน</span>
+      <div class="seg" role="group" aria-label="ประเภทงาน">
+        <button aria-pressed="${e.type === 'file'}" onclick="setType('file')">ส่งไฟล์</button>
+        <button aria-pressed="${e.type === 'quiz'}" onclick="setType('quiz')">ตอบคำถาม</button>
+      </div></div>
+    <div class="row2">
+      <div class="field"><label for="f-title">ชื่องาน</label><input id="f-title" class="inp" value="${esc(e.title)}" oninput="A.ed.title=this.value" placeholder="เช่น ใบงานที่ 3 การแบ่งเซลล์"></div>
+      <div class="field"><label for="f-id">รหัสงาน</label><input id="f-id" class="inp" value="${esc(e.id)}" oninput="A.ed.id=this.value.toUpperCase();A.ed.autoId=false" ${sent ? 'disabled' : ''}>
+        <small>${sent ? 'มีนักเรียนส่งแล้ว จึงเปลี่ยนรหัสไม่ได้' : 'ใช้เป็นหัวคอลัมน์คะแนนในชีทห้อง'}</small></div>
+    </div>
+    <div class="field"><label for="f-desc">รายละเอียด / คำสั่งงาน</label><textarea id="f-desc" class="inp" oninput="A.ed.desc=this.value" placeholder="อธิบายสิ่งที่ต้องทำและสิ่งที่ต้องส่ง">${esc(e.desc)}</textarea></div>
+    <div class="field"><span>ห้องที่ได้รับงาน</span>
+      <div class="chips" role="group" aria-label="ห้อง">
+        <button class="chip" aria-pressed="${all}" onclick="pickRoom('ALL')">ทุกห้อง</button>
+        ${d.rooms.map(r => `<button class="chip" aria-pressed="${!all && sel.includes(r.room)}" onclick="pickRoom('${esc(r.room)}')">${esc(roomName(r.room))}</button>`).join('')}
+      </div></div>
+    <div class="row2">
+      <div class="field"><span>ช่วงคะแนน</span>
+        <div class="seg" role="group" aria-label="ช่วงคะแนน">${d.periods.map(p => `<button aria-pressed="${e.period === p}" onclick="A.ed.period='${p}';renderEditor()">${p}</button>`).join('')}</div></div>
+      <div class="field"><label for="f-full">คะแนนเต็ม</label><input id="f-full" class="inp" type="number" min="0" step="0.5" value="${esc(e.full)}" oninput="A.ed.full=this.value"></div>
+    </div>
+    <div class="row2">
+      <div class="field"><label for="f-due">กำหนดส่ง</label><input id="f-due" class="inp" type="datetime-local" value="${esc(e.due)}" oninput="A.ed.due=this.value"><small>เว้นว่าง = ไม่มีกำหนด · ส่งหลังเวลานี้จะถูกบันทึกว่าส่งช้า</small></div>
+      <div class="field"><span>สถานะ</span>${sw(e.open, 'A.ed.open=!A.ed.open;renderEditor()', e.open ? 'นักเรียนเห็นงานนี้' : 'ซ่อนจากนักเรียน')}</div>
+    </div>
+    ${e.type === 'quiz' ? quizEditor() : ''}`;
+}
+function setType(t) { A.ed.type = t; if (A.ed.autoId) A.ed.id = nextId(t === 'quiz' ? 'Q' : 'W'); if (t === 'quiz' && !A.ed.questions.length) addQ(true); renderEditor(); }
+function pickRoom(r) {
+  let sel = String(A.ed.rooms || '').split(',').map(s => s.trim()).filter(x => x && x.toUpperCase() !== 'ALL');
+  if (r === 'ALL') sel = [];
+  else sel = sel.includes(r) ? sel.filter(x => x !== r) : sel.concat(r);
+  A.ed.rooms = sel.length ? sel.join(',') : 'ALL';
+  renderEditor();
+}
+
+function quizEditor() {
+  const qs = A.ed.questions;
+  const sumPts = qs.reduce((s, q) => s + (q.points === '' || q.points == null ? 1 : Number(q.points) || 0), 0);
+  return `<div class="field"><span>คำถาม (${qs.length} ข้อ · รวม ${sumPts} คะแนน${Number(A.ed.full) && sumPts !== Number(A.ed.full) ? ` <b style="color:var(--amber)">ไม่ตรงกับคะแนนเต็ม ${A.ed.full}</b>` : ''})</span>
+    <div class="note-box">ข้อปรนัยที่มีเฉลยระบบตรวจให้อัตโนมัติ · ถ้าทุกข้อเป็นปรนัยที่มีเฉลย ระบบจะลงคะแนนให้ทันทีที่นักเรียนส่ง</div>
+    ${qs.map((q, i) => qCard(q, i)).join('')}
+    <button class="btn ghost" onclick="addQ()">${svg('plus')}เพิ่มคำถาม</button></div>`;
+}
+function qCard(q, i) {
+  const mcq = q.choices.length > 0;
+  return `<div class="qbox">
+    <div class="qhead"><b>ข้อ ${i + 1}</b>
+      <div class="seg" role="group" aria-label="รูปแบบข้อ ${i + 1}">
+        <button aria-pressed="${mcq}" onclick="qMode(${i},true)">ปรนัย</button>
+        <button aria-pressed="${!mcq}" onclick="qMode(${i},false)">ข้อเขียน</button></div>
+      <button class="iconbtn" onclick="moveQ(${i},-1)" aria-label="เลื่อนขึ้น" ${i === 0 ? 'disabled' : ''}>${svg('up')}</button>
+      <button class="iconbtn" onclick="moveQ(${i},1)" aria-label="เลื่อนลง" ${i === A.ed.questions.length - 1 ? 'disabled' : ''}>${svg('down')}</button>
+      <button class="iconbtn" onclick="delQ(${i})" aria-label="ลบข้อ ${i + 1}">${svg('trash')}</button>
+    </div>
+    <textarea class="inp" rows="2" placeholder="พิมพ์โจทย์" aria-label="โจทย์ข้อ ${i + 1}" oninput="A.ed.questions[${i}].text=this.value">${esc(q.text)}</textarea>
+    ${mcq ? q.choices.map((c, j) => `<div class="opt">
+        <label class="key" title="ตั้งเป็นเฉลย"><input type="radio" name="key${i}" ${q.key === j ? 'checked' : ''} onchange="A.ed.questions[${i}].key=${j}" aria-label="เฉลย ${LABELS[j]}"><span class="lbl">${LABELS[j]}</span></label>
+        <input class="inp" value="${esc(c)}" placeholder="ตัวเลือก ${LABELS[j]}" aria-label="ตัวเลือก ${LABELS[j]} ข้อ ${i + 1}" oninput="A.ed.questions[${i}].choices[${j}]=this.value">
+        ${q.choices.length > 2 ? `<button class="iconbtn" onclick="delOpt(${i},${j})" aria-label="ลบตัวเลือก ${LABELS[j]}">${svg('trash')}</button>` : ''}
+      </div>`).join('') : ''}
+    <div class="qfoot">
+      ${mcq && q.choices.length < 5 ? `<button class="btn plain sm" onclick="addOpt(${i})">${svg('plus')}เพิ่มตัวเลือก</button>` : ''}
+      ${mcq ? `<span class="muted">${q.key >= 0 ? 'เฉลย: ' + LABELS[q.key] : 'ยังไม่เลือกเฉลย (กดวงกลมหน้าตัวเลือก)'}</span>` : '<span class="muted">ครูตรวจเอง</span>'}
+      <span style="margin-left:auto">คะแนน</span><input class="inp" type="number" min="0" step="0.5" value="${q.points === '' || q.points == null ? 1 : esc(q.points)}" aria-label="คะแนนข้อ ${i + 1}" oninput="A.ed.questions[${i}].points=this.value">
+    </div>
+  </div>`;
+}
+function addQ(silent) { A.ed.questions.push({ text: '', choices: ['', '', '', ''], key: -1, points: 1 }); if (!silent) renderEditor(); }
+function delQ(i) { A.ed.questions.splice(i, 1); renderEditor(); }
+function moveQ(i, d) { const q = A.ed.questions; [q[i], q[i + d]] = [q[i + d], q[i]]; renderEditor(); }
+function qMode(i, mcq) { const q = A.ed.questions[i]; q.choices = mcq ? (q.choices.length ? q.choices : ['', '', '', '']) : []; q.key = mcq ? q.key : -1; renderEditor(); }
+function addOpt(i) { A.ed.questions[i].choices.push(''); renderEditor(); }
+function delOpt(i, j) { const q = A.ed.questions[i]; q.choices.splice(j, 1); if (q.key === j) q.key = -1; else if (q.key > j) q.key--; renderEditor(); }
+
+function edError(m) { const b = $('edErr'); b.textContent = m; b.classList.remove('hidden'); b.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+async function saveTask() {
+  const e = A.ed;
+  if (!String(e.title).trim()) return edError('กรุณาใส่ชื่องาน');
+  if (!/^[A-Z0-9_-]{1,20}$/.test(String(e.id).trim())) return edError('รหัสงานใช้ได้เฉพาะ A-Z ตัวเลข - _');
+  const qs = (e.questions || []).map(q => {
+    const pairs = q.choices.map((c, j) => [String(c).trim(), j]).filter(p => p[0]);
+    const key = pairs.findIndex(p => p[1] === q.key);
+    return { text: String(q.text).trim(), choices: pairs.map(p => p[0]), key: key, points: q.points };
+  }).filter(q => q.text);
+  if (e.type === 'quiz') {
+    if (!qs.length) return edError('งานแบบตอบคำถามต้องมีอย่างน้อย 1 ข้อ');
+    const bad = qs.findIndex(q => q.choices.length === 1);
+    if (bad >= 0) return edError(`ข้อ ${bad + 1}: ปรนัยต้องมีตัวเลือกอย่างน้อย 2 ตัว`);
+  }
+  $('edSave').disabled = true; loading(true);
+  try {
+    await run('adminSaveTask', A.token, { id: e.id.trim(), title: e.title, desc: e.desc, rooms: e.rooms, period: e.period,
+      full: e.full, due: e.due, open: e.open, type: e.type, questions: qs }, e.orig);
+    const noKey = e.type === 'quiz' && qs.some(q => q.choices.length && q.key < 0);
+    closeEditor(); await refresh();
+    toast(noKey ? 'บันทึกแล้ว · มีข้อปรนัยที่ยังไม่ได้ตั้งเฉลย' : 'บันทึกงานเรียบร้อย');
+  } catch (err) { edError(errText(err)); }
+  $('edSave').disabled = false; loading(false);
+}
+async function deleteTask() {
+  const e = A.ed;
+  if (!confirm(`ลบงาน ${e.orig} "${e.title}" ?\nลบได้เฉพาะงานที่ยังไม่มีนักเรียนส่ง`)) return;
+  loading(true);
+  try { await run('adminDeleteTask', A.token, e.orig); closeEditor(); await refresh(); toast('ลบงานแล้ว'); }
+  catch (err) { edError(errText(err)); }
+  loading(false);
+}
+document.addEventListener('keydown', ev => { if (ev.key === 'Escape' && A.ed) closeEditor(); });
+
+/* ---------- start ---------- */
+if (A.token) refresh(); else logout(true);
+</script>
+</body>
+</html>
