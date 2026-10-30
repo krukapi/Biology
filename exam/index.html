@@ -516,16 +516,25 @@ const Guard = {
     const now = Date.now();
     if (now - this.last < 1000) return;
     this.incident = true; this.presentSince = 0; this.last = now; this.busy = true;
+    const predicted = this.count + 1;
+    // แสดงทันทีไม่ต้องรอเซิร์ฟเวอร์ (Apps Script ตอบช้า 1–2 วินาที)
+    if (predicted < this.limit) this.showWarn(predicted, type);
+    else { loading(true); $('loading').textContent = 'กำลังบันทึก…'; }
     let r;
     try { r = await run('reportViolation', S.room, S.student.no, S.pin, S.ex.id, type, S.ans); }
-    catch (e) { r = { count: this.count + 1, locked: this.count + 1 >= this.limit, offline: true }; }
-    this.busy = false;
-    this.count = r.count || this.count + 1;
+    catch (e) { r = { count: predicted, locked: predicted >= this.limit, offline: true }; }
+    this.busy = false; loading(false); $('loading').textContent = 'กำลังโหลด…';
+    this.count = r.count || predicted;
     if (r.locked) return this.lockOut(type, r.result);
-    $('warnTitle').textContent = `คำเตือน ครั้งที่ ${this.count}`;
+    this.showWarn(this.count, type);                                            // ยืนยันตัวเลขจากเซิร์ฟเวอร์
+  },
+  showWarn(n, type) {
+    this.count = Math.max(this.count, n - 1);
+    $('warnTitle').textContent = `คำเตือน ครั้งที่ ${n}`;
     $('warnWhy').textContent = type;
     $('warn').classList.remove('hidden');
-    this.pill();
+    $('guardText').textContent = `ถูกเตือนแล้ว ${n} ครั้ง · อีกครั้งจะถูกล็อก`;
+    $('guard').classList.add('warned');
   },
   /* เหตุการณ์เล็กน้อย: ไม่นับ แต่บันทึกให้ครูดู (จำกัดความถี่) */
   minor(detail) {
@@ -559,7 +568,8 @@ const Guard = {
     if (this.awaySince) {                                         // เพิ่งกลับมา
       const dur = now - this.awaySince, hidden = this.awayHidden;
       this.awaySince = 0;
-      if (dur >= this.AWAY_MS) this.flag(hidden ? 'สลับแอป เปลี่ยนแท็บ หรือย่อหน้าจอ' : 'ออกไปใช้หน้าต่างหรือแอปอื่น');
+      if (hidden) this.flag('สลับแอป พับ หรือย่อหน้าจอ');                    // หน้าถูกซ่อน = นับทันที ไม่ว่าสั้นแค่ไหน
+      else if (dur >= this.AWAY_MS) this.flag('ออกไปใช้หน้าต่างหรือแอปอื่น');
       else if (!this.incident) this.minor(`หน้าจอหลุดโฟกัสชั่วครู่ ${(dur / 1000).toFixed(1)} วินาที (ไม่นับ)`);
     }
     if (!this.presentSince) this.presentSince = now;
