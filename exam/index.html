@@ -453,7 +453,12 @@ window.addEventListener('beforeunload', e => { if (S.ex && (Guard.on || Object.k
  *  ครั้งแรกเตือน ครั้งที่ 2 เซิร์ฟเวอร์ล็อกและส่งคำตอบ (เก็บนับในชีท รีเฟรชก็ไม่รีเซ็ต)
  * ===================================================================== */
 const Guard = {
-  on: false, paused: false, count: 0, limit: 2, last: 0, blurAt: 0, hiddenAt: 0, base: null, fsWanted: false, busy: false,
+  on: false, paused: false, count: 0, limit: 2, last: 0, base: null, fsWanted: false, busy: false,
+  // "เหตุการณ์" = การออกจากหน้าข้อสอบ 1 ครั้ง ไม่ว่าจะยิงสัญญาณกี่ตัว นับเป็น 1 เสมอ
+  incident: false, awaySince: 0, awayHidden: false, presentSince: 0, minorSent: 0, minorLast: 0,
+  AWAY_MS: 1500,        // หลุดโฟกัสนานกว่านี้ = นับ   (สั้นกว่า = บันทึกเป็นเหตุการณ์เล็กน้อย ไม่นับ)
+  OVERLAY_MS: 2500,     // หน้าต่างอื่นทับ (ยังเห็นหน้าข้อสอบอยู่) นานเท่านี้ = นับทันทีโดยไม่ต้องรอกลับมา
+  SETTLE_MS: 2000,      // กลับมาอยู่หน้าข้อสอบต่อเนื่องเท่านี้ ถึงจะเริ่มนับเหตุการณ์ใหม่ได้
 
   fsEl() { return document.fullscreenElement || document.webkitFullscreenElement; },
   canFs() { const d = document.documentElement; return !!(d.requestFullscreen || d.webkitRequestFullscreen); },
@@ -464,11 +469,13 @@ const Guard = {
   exitFullscreen() { try { (document.exitFullscreen || document.webkitExitFullscreen).call(document); } catch (e) {} },
 
   start(count, limit) {
-    this.on = true; this.paused = false; this.count = count; this.limit = limit; this.last = 0;
+    Object.assign(this, { on: true, paused: false, count: count, limit: limit, last: 0, incident: false,
+      awaySince: 0, presentSince: Date.now(), minorSent: 0, minorLast: 0 });
     this.fsWanted = this.canFs();
     if (this.fsWanted && !this.fsEl()) this.enterFullscreen();
     document.body.classList.add('noselect');
     this.watermark(true);
+    this.incident = true;                         // ช่วงเข้าเต็มจอตอนเริ่ม ยังไม่นับ
     setTimeout(() => this.baseline(), 900);
     this.pill();
   },
@@ -480,8 +487,14 @@ const Guard = {
     if (this.fsEl()) this.exitFullscreen();
   },
   pause() { this.paused = true; },
-  resumeWatch() { this.paused = false; this.baseline(); },
-  baseline() { this.base = { w: window.innerWidth, h: window.innerHeight, land: window.innerWidth > window.innerHeight }; },
+  resumeWatch() { this.paused = false; this.incident = true; this.presentSince = Date.now(); this.baseline(); },
+  // ทิศทางของ "เครื่อง" (ไม่ใช่หน้าต่าง) — การแบ่งจอไม่ทำให้ค่านี้เปลี่ยน แต่การหมุนเครื่องเปลี่ยน
+  orient() {
+    const o = screen.orientation && screen.orientation.type;
+    if (o) return o.startsWith('landscape') ? 'L' : 'P';
+    return screen.width > screen.height ? 'L' : 'P';
+  },
+  baseline() { this.base = { w: window.innerWidth, h: window.innerHeight, o: this.orient() }; },
   pill() {
     $('guard').classList.remove('hidden');
     $('guard').classList.toggle('warned', this.count > 0);
@@ -495,13 +508,14 @@ const Guard = {
     w.classList.remove('hidden');
   },
 
-  /* เรียกเมื่อตรวจพบ: กันนับซ้ำจากเหตุการณ์เดียวที่ยิงหลายสัญญาณ */
+  /* ตรวจพบเหตุการณ์ที่นับ: 1 เหตุการณ์ = 1 ครั้ง */
   async flag(type) {
     if (!this.on || this.paused || this.busy || !S.ex) return;
+    if (this.incident) return;                                   // เหตุการณ์เดิมยังไม่จบ
     if (!$('warn').classList.contains('hidden')) return;
     const now = Date.now();
-    if (now - this.last < 4000) return;
-    this.last = now; this.busy = true;
+    if (now - this.last < 1000) return;
+    this.incident = true; this.presentSince = 0; this.last = now; this.busy = true;
     let r;
     try { r = await run('reportViolation', S.room, S.student.no, S.pin, S.ex.id, type, S.ans); }
     catch (e) { r = { count: this.count + 1, locked: this.count + 1 >= this.limit, offline: true }; }
@@ -513,6 +527,14 @@ const Guard = {
     $('warn').classList.remove('hidden');
     this.pill();
   },
+  /* เหตุการณ์เล็กน้อย: ไม่นับ แต่บันทึกให้ครูดู (จำกัดความถี่) */
+  minor(detail) {
+    if (!this.on || this.paused || !S.ex) return;
+    const now = Date.now();
+    if (this.minorSent >= 15 || now - this.minorLast < 8000) return;
+    this.minorSent++; this.minorLast = now;
+    run('logExamEvent', S.room, S.student.no, S.pin, S.ex.id, detail).catch(() => {});
+  },
   lockOut(type, res) {
     store(draftKey(), null);
     S.ex = null; this.stop();
@@ -521,25 +543,39 @@ const Guard = {
     show('v-locked');
   },
 
+  /* ตรวจสถานะทุก 0.5 วินาที + ทุกครั้งที่มีสัญญาณ focus/blur/visibility */
+  poll() {
+    if (!this.on || this.paused || !S.ex) return;
+    const now = Date.now();
+    const away = document.hidden || !document.hasFocus();
+    if (away) {
+      if (!this.awaySince) { this.awaySince = now; this.awayHidden = false; }
+      if (document.hidden) this.awayHidden = true;
+      this.presentSince = 0;
+      // ยังเห็นหน้าข้อสอบแต่มีแอป/หน้าต่างอื่นทับนานเกินไป → นับทันที
+      if (!document.hidden && now - this.awaySince >= this.OVERLAY_MS) this.flag('มีหน้าต่างหรือแอปอื่นทับหน้าข้อสอบ');
+      return;
+    }
+    if (this.awaySince) {                                         // เพิ่งกลับมา
+      const dur = now - this.awaySince, hidden = this.awayHidden;
+      this.awaySince = 0;
+      if (dur >= this.AWAY_MS) this.flag(hidden ? 'สลับแอป เปลี่ยนแท็บ หรือย่อหน้าจอ' : 'ออกไปใช้หน้าต่างหรือแอปอื่น');
+      else if (!this.incident) this.minor(`หน้าจอหลุดโฟกัสชั่วครู่ ${(dur / 1000).toFixed(1)} วินาที (ไม่นับ)`);
+    }
+    if (!this.presentSince) this.presentSince = now;
+    if (this.incident && !this.busy && $('warn').classList.contains('hidden') && now - this.presentSince >= this.SETTLE_MS) this.incident = false;
+  },
+
   init() {
-    document.addEventListener('visibilitychange', () => {
-      if (!this.on) return;
-      if (document.hidden) this.hiddenAt = Date.now();
-      else if (this.hiddenAt) { this.hiddenAt = 0; this.flag('สลับแอป เปลี่ยนแท็บ หรือย่อหน้าจอ'); }
-    });
-    window.addEventListener('blur', () => { if (this.on) this.blurAt = Date.now(); });
-    window.addEventListener('focus', () => {
-      if (!this.on || !this.blurAt) return;
-      const away = Date.now() - this.blurAt; this.blurAt = 0;
-      if (away > 1500) this.flag('ออกไปใช้หน้าต่างอื่น');
-    });
+    setInterval(() => this.poll(), 500);
+    ['visibilitychange'].forEach(ev => document.addEventListener(ev, () => this.poll()));
+    ['blur', 'focus'].forEach(ev => window.addEventListener(ev, () => setTimeout(() => this.poll(), 30)));
     const onFs = () => { if (this.on && this.fsWanted && !this.fsEl()) this.flag('ออกจากโหมดเต็มจอ'); };
     document.addEventListener('fullscreenchange', onFs);
     document.addEventListener('webkitfullscreenchange', onFs);
     window.addEventListener('resize', () => {
       if (!this.on || !this.base || this.paused) return;
-      const land = window.innerWidth > window.innerHeight;
-      if (land !== this.base.land) { setTimeout(() => this.baseline(), 700); return; }   // หมุนจอ ไม่นับ
+      if (this.orient() !== this.base.o) { setTimeout(() => this.baseline(), 700); return; }   // หมุนเครื่อง ไม่นับ
       if (window.innerWidth < this.base.w * 0.8 || window.innerHeight < this.base.h * 0.62) this.flag('แบ่งหน้าจอหรือเปิดหน้าต่างซ้อน');
     });
     document.addEventListener('keyup', e => {
@@ -569,7 +605,7 @@ Guard.init();
 function resume() {
   $('warn').classList.add('hidden');
   if (Guard.fsWanted && !Guard.fsEl()) Guard.enterFullscreen();
-  Guard.last = Date.now();
+  Guard.incident = true; Guard.presentSince = Date.now(); Guard.last = Date.now();   // ให้หน้าจอนิ่งก่อนเริ่มนับใหม่
   setTimeout(() => Guard.baseline(), 900);
 }
 
