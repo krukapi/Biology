@@ -48,6 +48,16 @@
   .b-red{background:var(--red-soft);color:var(--red)}
   .b-orange{background:var(--orange-soft);color:var(--orange)}
   .b-green{background:var(--brand-soft);color:var(--brand-dark)}
+  .b-grey{background:#eef1ef;color:#5d6862}
+  .card.fail{border-color:#f0b4ad;box-shadow:0 0 0 3px #fdeeec}
+  .review{display:flex;gap:10px;align-items:flex-start;border-radius:12px;padding:10px 12px;margin-bottom:10px;font-size:14.5px}
+  .review svg{flex:none;width:20px;height:20px;margin-top:1px}
+  .review b{display:block;font-weight:600}
+  .review p{margin:2px 0 0;white-space:pre-wrap;color:inherit}
+  .rv-pending{background:#f3f5f4;color:#4d5852}
+  .rv-pass{background:var(--brand-soft);color:var(--brand-dark)}
+  .rv-fail{background:var(--red-soft);color:var(--red)}
+  .tab .dot{display:inline-grid;place-items:center;min-width:20px;height:20px;padding:0 6px;margin-left:6px;border-radius:999px;background:var(--red);color:#fff;font-size:12px;font-weight:600;line-height:1}
   .sent{background:#f7faf8;border-radius:10px;padding:10px 12px;font-size:14px;margin-bottom:10px}
   .sent ul{margin:4px 0 0;padding-left:20px}
   .btn{width:100%;padding:12px;border:0;border-radius:14px;background:var(--brand);color:#fff;font:inherit;font-weight:500;cursor:pointer;transition:background .15s}
@@ -338,9 +348,11 @@ function renderScore(s) {
 
 function renderTasks() {
   const pending = state.tasks.filter(t => !t.submitted);
-  const done = state.tasks.filter(t => t.submitted);
+  const rank = { fail: 0, pending: 1, pass: 2 };
+  const done = state.tasks.filter(t => t.submitted).sort((a, b) => (rank[a.review] ?? 1) - (rank[b.review] ?? 1));
+  const fails = done.filter(t => t.review === 'fail').length;
   $('tabPending').textContent = `งานค้าง (${pending.length})`;
-  $('tabDone').textContent = `ส่งแล้ว (${done.length})`;
+  $('tabDone').innerHTML = `ส่งแล้ว (${done.length})${fails ? `<span class="dot" aria-label="ต้องแก้ ${fails} งาน">${fails}</span>` : ''}`;
   $('tabPending').classList.toggle('on', state.tab === 'pending');
   $('tabDone').classList.toggle('on', state.tab === 'done');
   const list = state.tab === 'pending' ? pending : done;
@@ -351,18 +363,30 @@ function renderTasks() {
 function card(t) {
   let badge = '';
   if (!t.submitted) badge = t.overdue ? '<span class="badge b-red">เลยกำหนด</span>' : '';
-  else badge = t.status === 'ส่งช้า' ? '<span class="badge b-orange">ส่งช้า</span>' : '<span class="badge b-green">ส่งแล้ว</span>';
+  else badge = { pass: '<span class="badge b-green">ผ่าน</span>', fail: '<span class="badge b-red">ไม่ผ่าน · ต้องแก้</span>' }[t.review]
+    || '<span class="badge b-grey">รอตรวจ</span>';
+  const late = t.submitted && t.status === 'ส่งช้า' ? ' · <span style="color:var(--orange)">ส่งช้า</span>' : '';
   const quiz = t.type === 'quiz';
   const files = quiz ? '' : t.files.map(f => `<li>${esc(f.name)}</li>`).join('');
   const typeTag = quiz ? `<span class="type">ตอบคำถาม ${t.questions.length} ข้อ</span>` : '';
-  const btnText = quiz ? (t.submitted ? 'แก้ไขคำตอบ' : 'ตอบคำถาม') : (t.submitted ? 'แก้ไข / ส่งใหม่' : 'ส่งงาน');
-  return `<article class="card">
+  const fail = t.review === 'fail';
+  const btnText = fail ? (quiz ? 'แก้คำตอบแล้วส่งใหม่' : 'แก้งานแล้วส่งใหม่')
+    : quiz ? (t.submitted ? 'แก้ไขคำตอบ' : 'ตอบคำถาม') : (t.submitted ? 'แก้ไข / ส่งใหม่' : 'ส่งงาน');
+  const RV = {
+    pending: ['rv-pending', '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>', 'รอครูตรวจ'],
+    pass: ['rv-pass', '<circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/>', 'ตรวจแล้ว ผ่าน'],
+    fail: ['rv-fail', '<circle cx="12" cy="12" r="9"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/>', 'ไม่ผ่าน กรุณาแก้ไขแล้วส่งใหม่']
+  }[t.review];
+  const review = t.submitted && RV ? `<div class="review ${RV[0]}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${RV[1]}</svg>
+      <div><b>${RV[2]}</b>${t.note ? `<p>ครู: ${esc(t.note)}</p>` : ''}</div></div>` : '';
+  return `<article class="card${fail ? ' fail' : ''}">
     <div class="card-top"><span>${typeTag}${esc(t.period)} · ${esc(t.full)} คะแนน</span>${badge}</div>
     <h3>${esc(t.title)}</h3>
     ${t.desc ? `<p class="desc">${esc(t.desc)}</p>` : ''}
     <p class="due">${t.dueText ? 'กำหนดส่ง ' + esc(t.dueText) : 'ไม่มีกำหนดส่ง'}</p>
-    ${t.submitted ? `<div class="sent">ส่งล่าสุด ${esc(t.submittedAt)}${t.count > 1 ? ` (ส่ง ${t.count} ครั้ง)` : ''}${files ? `<ul>${files}</ul>` : ''}</div>` : ''}
-    <button class="btn ${t.submitted ? 'ghost' : ''}" onclick="openUpload('${esc(t.id)}')">${btnText}</button>
+    ${review}
+    ${t.submitted ? `<div class="sent">ส่งล่าสุด ${esc(t.submittedAt)}${t.count > 1 ? ` (ส่ง ${t.count} ครั้ง)` : ''}${late}${files ? `<ul>${files}</ul>` : ''}</div>` : ''}
+    <button class="btn ${t.submitted && !fail ? 'ghost' : ''}" onclick="openUpload('${esc(t.id)}')">${btnText}</button>
   </article>`;
 }
 
