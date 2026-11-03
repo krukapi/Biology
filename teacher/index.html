@@ -193,6 +193,25 @@
   details.warned summary::-webkit-details-marker{display:none}
   .lact{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
 
+  /* ---------- missing-work report ---------- */
+  .rp-card{max-width:760px;max-height:92vh;display:flex;flex-direction:column;padding:0;overflow:hidden}
+  .rp-head{padding:18px 20px 12px;border-bottom:1px solid var(--line)}
+  .rp-head h3{font-size:18px;font-weight:600}
+  .rp-opts{display:flex;flex-direction:column;gap:10px;margin-top:12px}
+  .rp-row{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;font-size:14px}
+  .rp-row > b{font-weight:500;color:var(--text);min-width:64px}
+  .rp-row .seg button{padding:6px 12px;font-size:13.5px;white-space:nowrap;flex:none}
+  .ck{display:inline-flex;align-items:center;gap:6px;cursor:pointer;font-size:14px}
+  .ck input{accent-color:var(--brand);width:16px;height:16px}
+  .rp-tasks{display:flex;flex-wrap:wrap;gap:6px}
+  .rp-tasks .chip{font-size:13px;padding:4px 11px}
+  .rp-tasks .chip small{opacity:.75;margin-left:4px}
+  .rp-body{flex:1;min-height:0;display:flex;flex-direction:column;padding:12px 20px}
+  .rp-stat{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px}
+  .rp-text{flex:1;min-height:220px;width:100%;border:1px solid var(--line);border-radius:12px;padding:12px 14px;font:inherit;font-size:14px;line-height:1.6;resize:none;background:#fbfcfb}
+  .rp-foot{display:flex;gap:10px;align-items:center;padding:12px 20px;border-top:1px solid var(--line);background:#fafbfb}
+  .rp-foot .muted{font-size:13px;margin-right:auto}
+
   /* ---------- grading view ---------- */
   .gv{position:fixed;inset:0;z-index:15;background:var(--bg);display:flex;flex-direction:column}
   .gv-top{background:var(--card);border-bottom:1px solid var(--line);padding:10px 16px;display:flex;flex-wrap:wrap;align-items:center;gap:10px 14px}
@@ -342,6 +361,24 @@
     </div>
   </div>
 </div>
+<div id="report" class="modal hidden" onclick="if(event.target===this)closeReport()">
+  <div class="modal-card rp-card" role="dialog" aria-modal="true" aria-labelledby="rpTitle">
+    <div class="rp-head">
+      <h3 id="rpTitle">สรุปงานค้าง</h3>
+      <div class="rp-opts" id="rpOpts"></div>
+    </div>
+    <div class="rp-body">
+      <div class="rp-stat" id="rpStat"></div>
+      <label for="rpText" class="hidden">ข้อความสรุป</label>
+      <textarea id="rpText" class="rp-text" spellcheck="false"></textarea>
+    </div>
+    <div class="rp-foot">
+      <span class="muted" id="rpLen"></span>
+      <button class="btn plain" onclick="closeReport()">ปิด</button>
+      <button class="btn" id="rpCopy" onclick="copyReport()">คัดลอกข้อความ</button>
+    </div>
+  </div>
+</div>
 <div id="gv" class="gv hidden" role="dialog" aria-modal="true" aria-label="ตรวจงาน"></div>
 <div id="lb" class="lb hidden" onclick="if(event.target===this||event.target.classList.contains('lb-scroll'))closeLb()">
   <div class="lb-scroll"><img id="lbImg" alt="" onclick="this.closest('.lb').classList.toggle('zoom')"></div>
@@ -443,6 +480,7 @@ function renderAll() {
     const open = d.tasks.filter(t => t.open && appliesTo(t.rooms, r.room)).length;
     return `<div class="room">
       <div class="room-top"><h3>${esc(roomName(r.room))}</h3><button onclick="setTab('${esc(r.room)}')">ดูงานของห้อง →</button></div>
+      <button class="btn ghost sm" onclick="openReport('${esc(r.room)}')">${RP_ICON}สรุปงานค้าง</button>
       <div class="facts"><span><b>${r.students}</b>คน</span><span><b>${open}</b>งานที่เปิด</span></div>
       <div class="sw">
         ${sw(r.submit, `toggleRoom('${esc(r.room)}','submit',${!r.submit})`, 'ระบบส่งงาน')}
@@ -485,6 +523,7 @@ function renderRoom(room) {
       <div style="display:flex;gap:18px;align-items:center;flex-wrap:wrap">
         ${sw(r.submit, `toggleRoom('${esc(room)}','submit',${!r.submit})`, 'ระบบส่งงาน')}
         ${sw(r.exam, `toggleRoom('${esc(room)}','exam',${!r.exam})`, 'ระบบสอบ')}
+        <button class="btn ghost" onclick="openReport('${esc(room)}')">${RP_ICON}สรุปงานค้าง</button>
         <button class="btn" onclick="openEditor(null,'${esc(room)}')">${svg('plus')}เพิ่มงานให้ห้องนี้</button>
       </div></div>
     ${lockedSection(room)}
@@ -834,6 +873,92 @@ document.addEventListener('keydown', ev => {
   else if (ev.key === 'Escape') closeGrade();
 });
 
+/* =====================================================================
+ *  สรุปงานค้างรายห้อง → ข้อความพร้อมคัดลอกส่งกลุ่ม LINE
+ * ===================================================================== */
+const RP_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M9 12h6"/><path d="M9 16h4"/></svg>';
+async function openReport(room) {
+  A.rp = { room, data: null, scope: 'open', by: 'student', fail: true, names: true, link: true, skip: {} };
+  $('rpTitle').textContent = `สรุปงานค้าง ${roomName(room)}`;
+  $('rpOpts').innerHTML = ''; $('rpStat').innerHTML = ''; $('rpText').value = 'กำลังโหลด…'; $('rpLen').textContent = '';
+  $('report').classList.remove('hidden');
+  try {
+    A.rp.data = await run('adminMissingReport', A.token, room);
+    if (!A.rp || A.rp.room !== room) return;
+    renderReport();
+  } catch (e) { $('rpText').value = errText(e); }
+}
+function closeReport() { $('report').classList.add('hidden'); A.rp = null; }
+function rpSet(k, v) { A.rp[k] = v; renderReport(); }
+function rpToggleTask(id) { A.rp.skip[id] = !A.rp.skip[id]; renderReport(); }
+
+function rpTasks() {
+  const r = A.rp;
+  return r.data.tasks.filter(t => !r.skip[t.id] && (r.scope === 'all' || (r.scope === 'open' ? t.open : t.open && t.overdue)));
+}
+function renderReport() {
+  const r = A.rp, d = r.data;
+  const scoped = d.tasks.filter(t => r.scope === 'all' || (r.scope === 'open' ? t.open : t.open && t.overdue));
+  $('rpOpts').innerHTML = `
+    <div class="rp-row"><b>งาน</b>
+      <div class="seg" role="group" aria-label="ขอบเขตงาน">
+        ${[['open', 'งานที่เปิดอยู่'], ['overdue', 'เฉพาะที่เลยกำหนด'], ['all', 'ทุกงาน']].map(([v, l]) => `<button aria-pressed="${r.scope === v}" onclick="rpSet('scope','${v}')">${l}</button>`).join('')}
+      </div></div>
+    ${scoped.length ? `<div class="rp-row"><b></b><div class="rp-tasks" role="group" aria-label="เลือกงาน">${scoped.map(t => `<button class="chip" aria-pressed="${!r.skip[t.id]}" onclick="rpToggleTask('${esc(t.id)}')">${esc(t.id)} ${esc(t.title)}${t.overdue ? '<small>เลยกำหนด</small>' : ''}</button>`).join('')}</div></div>` : ''}
+    <div class="rp-row"><b>เรียง</b>
+      <div class="seg" role="group" aria-label="รูปแบบ">
+        <button aria-pressed="${r.by === 'student'}" onclick="rpSet('by','student')">ตามนักเรียน</button>
+        <button aria-pressed="${r.by === 'task'}" onclick="rpSet('by','task')">ตามงาน</button>
+      </div>
+      <label class="ck"><input type="checkbox" ${r.fail ? 'checked' : ''} onchange="rpSet('fail',this.checked)">รวมงานที่ไม่ผ่าน (ต้องแก้)</label>
+      <label class="ck"><input type="checkbox" ${r.names ? 'checked' : ''} onchange="rpSet('names',this.checked)">แสดงชื่อ</label>
+      <label class="ck"><input type="checkbox" ${r.link ? 'checked' : ''} onchange="rpSet('link',this.checked)">แนบลิงก์ส่งงาน</label>
+    </div>`;
+  const text = buildReport();
+  $('rpText').value = text.text;
+  $('rpStat').innerHTML = `<span class="tag r">ค้าง ${text.owe} คน</span><span class="tag g">ครบแล้ว ${text.ok} คน</span><span class="tag">${text.tasks} งาน</span>`;
+  $('rpLen').textContent = `${text.text.length.toLocaleString()} ตัวอักษร` + (text.text.length > 4800 ? ' · ยาวเกิน 1 ข้อความ LINE (5,000) ลองแยกส่งทีละงาน' : '');
+}
+function buildReport() {
+  const r = A.rp, d = r.data, tasks = rpTasks();
+  const who = s => r.names ? `เลขที่ ${s.no} ${s.name}` : `เลขที่ ${s.no}`;
+  const due = t => t.dueShort ? ` (กำหนด ${t.dueShort})` : '';
+  const owing = s => tasks.map(t => ({ t, st: s.subs[t.id] })).filter(x => !x.st || (r.fail && x.st === 'fail'));
+  const rows = d.students.map(s => ({ s, items: owing(s) }));
+  const owe = rows.filter(x => x.items.length);
+  const lines = [`📢 สรุปงานค้าง ชีววิทยา ${roomName(r.room)}`, `ข้อมูล ณ ${d.now}`, ''];
+  if (!tasks.length) lines.push('(ยังไม่ได้เลือกงาน)');
+  else if (!owe.length) lines.push('🎉 ทุกคนส่งงานครบแล้ว');
+  else if (r.by === 'student') {
+    lines.push(`ยังค้างงาน ${owe.length} คน`, '');
+    owe.forEach(x => {
+      lines.push(`▫️ ${who(x.s)}`);
+      x.items.forEach(i => lines.push(`   - ${i.t.title}${i.st === 'fail' ? ' ❗ไม่ผ่าน ต้องแก้' : due(i.t)}`));
+    });
+  } else {
+    tasks.forEach(t => {
+      const none = d.students.filter(s => !s.subs[t.id]);
+      const fail = r.fail ? d.students.filter(s => s.subs[t.id] === 'fail') : [];
+      if (!none.length && !fail.length) return;
+      lines.push(`📌 ${t.title}${due(t)}`);
+      if (none.length) lines.push(`ยังไม่ส่ง ${none.length} คน`, ...(r.names ? none.map(s => '   ' + who(s)) : ['   เลขที่ ' + none.map(s => s.no).join(', ')]));
+      if (fail.length) lines.push(`ไม่ผ่าน ต้องแก้ ${fail.length} คน`, ...(r.names ? fail.map(s => '   ' + who(s)) : ['   เลขที่ ' + fail.map(s => s.no).join(', ')]));
+      lines.push('');
+    });
+    while (lines[lines.length - 1] === '') lines.pop();
+  }
+  if (owe.length && tasks.length) lines.push('', `✅ ส่งครบแล้ว ${d.students.length - owe.length} คน`);
+  if (r.link) lines.push('', `ส่งงานได้ที่ ${new URL('../submit/', location.href).href}?openExternalBrowser=1`);
+  return { text: lines.join('\n'), owe: owe.length, ok: d.students.length - owe.length, tasks: tasks.length };
+}
+async function copyReport() {
+  const t = $('rpText').value;
+  try { await navigator.clipboard.writeText(t); }
+  catch (e) { $('rpText').select(); document.execCommand('copy'); }
+  $('rpCopy').textContent = 'คัดลอกแล้ว ✓';
+  setTimeout(() => { if ($('rpCopy')) $('rpCopy').textContent = 'คัดลอกข้อความ'; }, 1800);
+}
+
 /* ---------- toggles (อัปเดตทันที ถ้าไม่สำเร็จจะย้อนกลับ) ---------- */
 async function toggle(apply, revert, call, msg) {
   apply(); render();
@@ -990,7 +1115,7 @@ async function deleteTask() {
   catch (err) { edError(errText(err)); }
   loading(false);
 }
-document.addEventListener('keydown', ev => { if (ev.key !== 'Escape' || A.g) return; closeTimeline(); if (A.ul) closeUnlock(); else if (A.ed) closeEditor(); });
+document.addEventListener('keydown', ev => { if (ev.key !== 'Escape' || A.g) return; if (A.rp) return closeReport(); closeTimeline(); if (A.ul) closeUnlock(); else if (A.ed) closeEditor(); });
 
 /* ---------- start ---------- */
 if (A.token) refresh(); else logout(true);
