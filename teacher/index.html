@@ -193,6 +193,25 @@
   details.warned summary::-webkit-details-marker{display:none}
   .lact{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
 
+  /* ---------- announcements ---------- */
+  .an-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);gap:18px;align-items:start}
+  @media (max-width:900px){.an-grid{grid-template-columns:1fr}}
+  .an-form{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:18px;display:flex;flex-direction:column;gap:12px;position:sticky;top:60px}
+  @media (max-width:900px){.an-form{position:static}}
+  .an-form h3{font-size:17px;font-weight:600}
+  .an-form textarea{min-height:130px}
+  .an-item{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:16px 18px;margin-bottom:12px}
+  .an-item.off{opacity:.62}
+  .an-item h4{font-size:16px;font-weight:600;margin-bottom:4px}
+  .an-item .msg{white-space:pre-wrap;font-size:14.5px;color:var(--text);line-height:1.6;max-height:9.6em;overflow:hidden}
+  .an-meta{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:8px 0 10px;font-size:13px;color:var(--muted)}
+  .an-foot{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;border-top:1px solid var(--line2);padding-top:10px}
+  .an-foot .prog{flex:1;min-width:160px}
+  .an-foot .acts{display:flex;gap:6px;margin-left:auto}
+  .rd-room{margin-bottom:14px}
+  .rd-room h4{font-size:15px;font-weight:600;margin-bottom:4px;display:flex;justify-content:space-between}
+  .rd-room p{font-size:14px;color:var(--text);line-height:1.6}
+
   /* ---------- missing-work report ---------- */
   .rp-card{max-width:760px;max-height:92vh;display:flex;flex-direction:column;padding:0;overflow:hidden}
   .rp-head{padding:18px 20px 12px;border-bottom:1px solid var(--line)}
@@ -361,6 +380,14 @@
     </div>
   </div>
 </div>
+<div id="anReaders" class="modal hidden" onclick="if(event.target===this)this.classList.add('hidden')">
+  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="rdTitle" style="max-width:520px">
+    <h3 id="rdTitle">คนที่ยังไม่อ่านประกาศ</h3>
+    <p id="rdSub" class="muted" style="margin:2px 0 12px"></p>
+    <div id="rdList" style="max-height:55vh;overflow:auto"></div>
+    <div class="modal-foot" style="margin-top:12px"><button class="btn ghost" id="rdCopy" onclick="copyReaders()">คัดลอกรายชื่อ</button><button class="btn plain" onclick="$('anReaders').classList.add('hidden')">ปิด</button></div>
+  </div>
+</div>
 <div id="report" class="modal hidden" onclick="if(event.target===this)closeReport()">
   <div class="modal-card rp-card" role="dialog" aria-modal="true" aria-labelledby="rpTitle">
     <div class="rp-head">
@@ -469,9 +496,10 @@ function setTab(t) { A.tab = t; render(); window.scrollTo(0, 0); }
 /* ---------- render ---------- */
 function render() {
   const d = A.data;
-  $('tabs').innerHTML = [`<button class="tab ${A.tab === 'all' ? 'on' : ''}" onclick="setTab('all')">ภาพรวม</button>`]
+  $('tabs').innerHTML = [`<button class="tab ${A.tab === 'all' ? 'on' : ''}" onclick="setTab('all')">ภาพรวม</button>`,
+    `<button class="tab ${A.tab === 'ann' ? 'on' : ''}" onclick="setTab('ann');loadAnns()">ประกาศ</button>`]
     .concat(d.rooms.map(r => `<button class="tab ${A.tab === r.room ? 'on' : ''}" onclick="setTab('${esc(r.room)}')">${esc(roomName(r.room))}<small>${r.students}</small></button>`)).join('');
-  $('content').innerHTML = A.tab === 'all' ? renderAll() : renderRoom(A.tab);
+  $('content').innerHTML = A.tab === 'all' ? renderAll() : A.tab === 'ann' ? renderAnnTab() : renderRoom(A.tab);
 }
 
 function renderAll() {
@@ -872,6 +900,114 @@ document.addEventListener('keydown', ev => {
   else if (ev.key === 'ArrowLeft' || ev.key === 'ArrowUp') { ev.preventDefault(); gStep(-1); }
   else if (ev.key === 'Escape') closeGrade();
 });
+
+/* =====================================================================
+ *  ประกาศรายห้อง
+ * ===================================================================== */
+const MEGA = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 11 18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></svg>';
+function blankAnn() { return { id: '', rooms: 'ALL', title: '', message: '', expire: '', active: true }; }
+async function loadAnns(force) {
+  if (A.anns && !force) return;
+  try { A.anns = await run('adminAnnouncements', A.token); } catch (e) { A.anns = []; toast(errText(e), true); }
+  if (A.tab === 'ann') render();
+}
+function renderAnnTab() {
+  if (!A.anForm) A.anForm = blankAnn();
+  const f = A.anForm, d = A.data;
+  const sel = String(f.rooms || '').split(',').map(x => x.trim()).filter(Boolean);
+  const all = !sel.length || sel.some(x => x.toUpperCase() === 'ALL');
+  const list = A.anns;
+  return `
+    <div class="head"><div><h1>ประกาศ</h1><p>นักเรียนจะเห็นประกาศเด้งขึ้นทันทีที่เข้าระบบส่งงาน และต้องกด "รับทราบ"</p></div></div>
+    <div class="an-grid">
+      <section class="an-form" aria-labelledby="anfT">
+        <h3 id="anfT">${f.id ? 'แก้ไขประกาศ' : 'เขียนประกาศใหม่'}</h3>
+        <div class="field"><span>ส่งถึง</span><div class="chips" role="group" aria-label="ห้อง">
+          <button class="chip" aria-pressed="${all}" onclick="anRoom('ALL')">ทุกห้อง</button>
+          ${d.rooms.map(r => `<button class="chip" aria-pressed="${!all && sel.includes(r.room)}" onclick="anRoom('${esc(r.room)}')">${esc(roomName(r.room))}</button>`).join('')}
+        </div></div>
+        <div class="field"><label for="anTitle">หัวข้อ <span class="muted">(ไม่บังคับ)</span></label><input id="anTitle" class="inp" maxlength="120" value="${esc(f.title)}" oninput="A.anForm.title=this.value" placeholder="เช่น สอบย่อยวันศุกร์นี้"></div>
+        <div class="field"><label for="anMsg">ข้อความ</label><textarea id="anMsg" class="inp" oninput="A.anForm.message=this.value" placeholder="พิมพ์ประกาศ ใส่ลิงก์ได้ นักเรียนกดเปิดได้">${esc(f.message)}</textarea></div>
+        <div class="field"><label for="anExp">หมดอายุ <span class="muted">(ไม่บังคับ · หลังเวลานี้ประกาศจะหายเอง)</span></label><input id="anExp" class="inp" type="datetime-local" value="${esc(f.expire)}" oninput="A.anForm.expire=this.value"></div>
+        <div class="gactions">
+          ${f.id ? '<button class="btn plain" onclick="A.anForm=null;render()">ยกเลิก</button>' : ''}
+          <button class="btn" id="anSave" onclick="saveAnn()">${MEGA}${f.id ? 'บันทึกการแก้ไข' : 'ประกาศ'}</button>
+        </div>
+        ${f.id ? '<p class="muted" style="font-size:13px">แก้ไขแล้ว นักเรียนที่กดรับทราบไปแล้วจะไม่เด้งซ้ำ ถ้าต้องการให้ทุกคนเห็นอีกครั้ง ให้สร้างประกาศใหม่</p>' : ''}
+      </section>
+      <section aria-label="ประกาศทั้งหมด">
+        ${list == null ? '<div class="empty">กำลังโหลด…</div>' : !list.length ? '<div class="tbl"><div class="empty">ยังไม่มีประกาศ</div></div>' : list.map(a => `
+          <article class="an-item ${!a.active || a.expired ? 'off' : ''}">
+            ${a.title ? `<h4>${esc(a.title)}</h4>` : ''}
+            <div class="msg">${esc(a.message)}</div>
+            <div class="an-meta"><span class="tag">${esc(roomsLabel(a.rooms))}</span><span>${esc(a.created)}</span>
+              ${a.expired ? '<span class="tag r">หมดอายุแล้ว</span>' : a.expireText ? `<span>หมดอายุ ${esc(a.expireText)}</span>` : ''}</div>
+            <div class="an-foot">
+              <div class="prog"><div class="prog-top"><span>อ่านแล้ว <b>${a.read}</b>/${a.total}</span></div>
+                <div class="bar"><span class="ok" style="width:${a.total ? a.read / a.total * 100 : 0}%"></span></div></div>
+              ${sw(a.active, `toggleAnn('${esc(a.id)}',${!a.active})`)}
+              <div class="acts">
+                <button class="btn ghost sm" onclick="anReaders('${esc(a.id)}')">ยังไม่อ่าน</button>
+                <button class="iconbtn" onclick="editAnn('${esc(a.id)}')" aria-label="แก้ไขประกาศ">${svg('edit')}</button>
+                <button class="iconbtn" onclick="delAnn('${esc(a.id)}')" aria-label="ลบประกาศ">${svg('trash')}</button>
+              </div>
+            </div>
+          </article>`).join('')}
+      </section>
+    </div>`;
+}
+function anRoom(r) {
+  let sel = String(A.anForm.rooms || '').split(',').map(x => x.trim()).filter(x => x && x.toUpperCase() !== 'ALL');
+  if (r === 'ALL') sel = []; else sel = sel.includes(r) ? sel.filter(x => x !== r) : sel.concat(r);
+  A.anForm.rooms = sel.length ? sel.join(',') : 'ALL';
+  render();
+}
+async function saveAnn() {
+  const f = A.anForm;
+  if (!String(f.message).trim()) return toast('กรุณาใส่ข้อความประกาศ', true);
+  $('anSave').disabled = true; loading(true);
+  try {
+    await run('adminSaveAnnouncement', A.token, f);
+    toast(f.id ? 'บันทึกการแก้ไขแล้ว' : `ประกาศแล้ว · ${roomsLabel(f.rooms)}`);
+    A.anForm = null; await loadAnns(true);
+  } catch (e) { toast(errText(e), true); }
+  loading(false); if ($('anSave')) $('anSave').disabled = false;
+}
+function editAnn(id) { const a = A.anns.find(x => x.id === id); A.anForm = { id: a.id, rooms: a.rooms, title: a.title, message: a.message, expire: a.expire, active: a.active }; render(); window.scrollTo(0, 0); }
+async function delAnn(id) {
+  const a = A.anns.find(x => x.id === id);
+  if (!confirm(`ลบประกาศ "${a.title || a.message.slice(0, 30)}" ?`)) return;
+  loading(true);
+  try { await run('adminDeleteAnnouncement', A.token, id); toast('ลบประกาศแล้ว'); if (A.anForm && A.anForm.id === id) A.anForm = null; await loadAnns(true); }
+  catch (e) { toast(errText(e), true); }
+  loading(false);
+}
+function toggleAnn(id, on) {
+  const a = A.anns.find(x => x.id === id);
+  toggle(() => a.active = on, () => a.active = !on, () => run('adminSaveAnnouncement', A.token, { id, active: on, onlyStatus: true }),
+    on ? 'เปิดประกาศแล้ว' : 'ปิดประกาศแล้ว (นักเรียนจะไม่เห็น)');
+}
+async function anReaders(id) {
+  const a = A.anns.find(x => x.id === id);
+  loading(true);
+  try {
+    const rooms = await run('adminAnnouncementReaders', A.token, id);
+    A.rd = { a, rooms };
+    $('rdSub').textContent = a.title || a.message.slice(0, 60);
+    $('rdList').innerHTML = rooms.map(r => `<div class="rd-room"><h4><span>${esc(roomName(r.room))}</span><span class="muted" style="font-weight:400">อ่านแล้ว ${r.read}/${r.read + r.unread.length}</span></h4>
+      <p>${r.unread.length ? r.unread.map(s => `${esc(s.no)}. ${esc(s.name)}`).join('<br>') : '✓ อ่านครบทุกคน'}</p></div>`).join('');
+    $('anReaders').classList.remove('hidden');
+  } catch (e) { toast(errText(e), true); }
+  loading(false);
+}
+async function copyReaders() {
+  const { a, rooms } = A.rd;
+  const t = [`📢 ยังไม่ได้อ่านประกาศ "${a.title || a.message.split('\n')[0].slice(0, 40)}"`]
+    .concat(...rooms.filter(r => r.unread.length).map(r => ['', roomName(r.room), ...r.unread.map(s => `เลขที่ ${s.no} ${s.name}`)]))
+    .concat(['', `เปิดอ่านได้ที่ ${new URL('../submit/', location.href).href}?openExternalBrowser=1`]).join('\n');
+  try { await navigator.clipboard.writeText(t); } catch (e) {}
+  $('rdCopy').textContent = 'คัดลอกแล้ว ✓'; setTimeout(() => $('rdCopy').textContent = 'คัดลอกรายชื่อ', 1800);
+}
 
 /* =====================================================================
  *  สรุปงานค้างรายห้อง → ข้อความพร้อมคัดลอกส่งกลุ่ม LINE

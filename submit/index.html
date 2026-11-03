@@ -90,6 +90,27 @@
   .score-num{font-size:34px;font-weight:600;color:var(--brand);white-space:nowrap;line-height:1;letter-spacing:-.02em}
   .score-num small{font-size:16px;color:var(--muted);font-weight:600;margin-left:4px}
   #quizBox{margin:14px 0 6px}
+  .ann-btn{width:100%;display:flex;align-items:center;gap:10px;background:#fff8e6;border:1px solid #f3dfae;color:#7a5200;border-radius:16px;padding:11px 14px;margin-bottom:12px;font:inherit;font-weight:500;cursor:pointer;text-align:left}
+  .ann-btn svg{flex:none;width:20px;height:20px}
+  .ann-btn span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .ann-btn b{flex:none;background:#d9730d;color:#fff;border-radius:999px;font-size:12px;padding:1px 8px}
+  .ann{position:fixed;inset:0;z-index:30;background:rgba(18,28,23,.55);display:flex;align-items:center;justify-content:center;padding:18px}
+  .ann-card{background:#fff;border-radius:22px;width:100%;max-width:440px;max-height:86vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 20px 50px -20px rgba(0,0,0,.4)}
+  .ann-top{background:linear-gradient(135deg,#f6b54a,#e8890c);color:#fff;padding:18px 20px 16px;display:flex;align-items:center;gap:12px}
+  .ann-top svg{flex:none;width:30px;height:30px}
+  .ann-top b{display:block;font-size:13px;font-weight:500;opacity:.9}
+  .ann-top h3{font-size:19px;font-weight:600;line-height:1.3;margin:0}
+  .ann-body{padding:18px 20px;overflow:auto;white-space:pre-wrap;line-height:1.65;color:var(--ink);font-size:16px}
+  .ann-body a{color:var(--brand);word-break:break-all}
+  .ann-meta{padding:0 20px 4px;font-size:13px;color:var(--muted)}
+  .ann-foot{padding:14px 20px 18px;display:flex;gap:10px;align-items:center}
+  .ann-foot small{color:var(--muted);margin-right:auto}
+  .ann-foot .btn{width:auto;padding:11px 22px}
+  .ann-list{padding:6px 20px 4px;overflow:auto;display:flex;flex-direction:column;gap:10px}
+  .ann-item{border:1px solid var(--line);border-radius:14px;padding:12px 14px}
+  .ann-item h4{margin:0 0 4px;font-size:15.5px;font-weight:600}
+  .ann-item p{margin:0;white-space:pre-wrap;font-size:14.5px;line-height:1.6}
+  .ann-item small{display:block;color:var(--muted);font-size:12.5px;margin-top:6px}
   .q{margin-bottom:16px}
   .q label{display:block;font-weight:600;margin-bottom:6px;white-space:pre-wrap}
   fieldset.q{border:0;padding:0}
@@ -142,6 +163,10 @@
   </section>
 
   <section id="step-tasks" class="hidden">
+    <button id="annBtn" class="ann-btn hidden" onclick="openAnnList()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 11 18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></svg>
+      <span id="annBtnText">ประกาศจากครู</span><b id="annBtnCount"></b>
+    </button>
     <div class="score">
       <div>
         <div class="score-label">คะแนนปัจจุบัน</div>
@@ -177,6 +202,7 @@
   </div>
 </div>
 
+<div id="ann" class="ann hidden" role="dialog" aria-modal="true" aria-labelledby="annTitle"><div class="ann-card" id="annCard"></div></div>
 <div id="loading">กำลังโหลด…</div>
 
 <script src="../config.js"></script>
@@ -314,6 +340,7 @@ function authFail() {
 }
 
 function logout() {
+  state.annLoaded = false; state.anns = []; $('annBtn').classList.add('hidden');
   store('no', null); store('pin', null);
   state.student = null; state.pin = null;
   $('who').innerHTML = '';
@@ -335,6 +362,57 @@ async function loadTasks() {
   }
   catch (e) { loading(false); if (isAuth(e)) return authFail(); banner(e); }
   loading(false);
+  if (!state.annLoaded) loadAnnouncements();       // โหลดประกาศครั้งเดียวต่อการเข้าระบบ
+}
+
+/* ---------- ประกาศจากครู ---------- */
+const MEGAPHONE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 11 18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></svg>';
+const linkify = t => esc(t).replace(/https?:\/\/[^\s<]+/g, u => `<a href="${u}" target="_blank" rel="noopener">${u}</a>`);
+async function loadAnnouncements() {
+  state.annLoaded = true;
+  try { state.anns = await run('getAnnouncements', state.room, state.student.no, state.pin); }
+  catch (e) { state.anns = []; return; }
+  renderAnnBtn();
+  state.annQueue = state.anns.filter(a => !a.seen);
+  if (state.annQueue.length) showNextAnn();
+}
+function renderAnnBtn() {
+  const a = state.anns || [], unseen = a.filter(x => !x.seen).length;
+  $('annBtn').classList.toggle('hidden', !a.length);
+  if (!a.length) return;
+  $('annBtnText').textContent = a[0].title || a[0].message.split('\n')[0];
+  $('annBtnCount').textContent = unseen ? `ใหม่ ${unseen}` : `${a.length} ประกาศ`;
+}
+function showNextAnn() {
+  const q = state.annQueue, a = q[0];
+  if (!a) return $('ann').classList.add('hidden');
+  const total = state.anns.filter(x => !x.seen).length + (state.annDone || 0);
+  const idx = (state.annDone || 0) + 1;
+  $('annCard').innerHTML = `
+    <div class="ann-top">${MEGAPHONE}<div><b>ประกาศจากครู${total > 1 ? ` · ${idx}/${total}` : ''}</b><h3 id="annTitle">${esc(a.title || 'ประกาศ')}</h3></div></div>
+    <div class="ann-body">${linkify(a.message)}</div>
+    <div class="ann-meta">${esc(a.date)}</div>
+    <div class="ann-foot"><small>${q.length > 1 ? `มีอีก ${q.length - 1} ประกาศ` : ''}</small>
+      <button class="btn" id="annAck" onclick="ackAnn()">${q.length > 1 ? 'รับทราบ ถัดไป →' : 'รับทราบ'}</button></div>`;
+  $('ann').classList.remove('hidden');
+  setTimeout(() => { const b = $('annAck'); if (b) b.focus(); }, 50);
+}
+function ackAnn() {
+  const a = state.annQueue.shift();
+  if (a) { a.seen = true; state.annDone = (state.annDone || 0) + 1; run('ackAnnouncement', state.room, state.student.no, state.pin, a.id).catch(() => {}); }
+  renderAnnBtn();
+  if (state.annQueue.length) showNextAnn();
+  else { $('ann').classList.add('hidden'); state.annDone = 0; }
+}
+function openAnnList() {
+  const a = state.anns || [];
+  $('annCard').innerHTML = `
+    <div class="ann-top">${MEGAPHONE}<div><b>ประกาศจากครู</b><h3 id="annTitle">ประกาศทั้งหมด ${a.length} รายการ</h3></div></div>
+    <div class="ann-list">${a.map(x => `<div class="ann-item">${x.title ? `<h4>${esc(x.title)}</h4>` : ''}<p>${linkify(x.message)}</p><small>${esc(x.date)}</small></div>`).join('')}</div>
+    <div class="ann-foot"><small></small><button class="btn" onclick="$('ann').classList.add('hidden')">ปิด</button></div>`;
+  $('ann').classList.remove('hidden');
+  a.filter(x => !x.seen).forEach(x => { x.seen = true; run('ackAnnouncement', state.room, state.student.no, state.pin, x.id).catch(() => {}); });
+  renderAnnBtn();
 }
 
 function setTab(t) { state.tab = t; renderTasks(); }
