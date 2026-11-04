@@ -283,6 +283,40 @@
   .lb-btn svg{width:22px;height:22px}
   .lb-close{top:14px;right:14px}.lb-prev{left:14px;top:50%}.lb-next{right:14px;top:50%}
   .gv-back-m{display:none}
+  /* ---- batch (ดูหลายคน) ---- */
+  .bv{flex:1;overflow:auto;padding:16px 20px 110px;min-height:0}
+  .bv-wrap{max-width:1100px;margin:0 auto;display:flex;flex-direction:column;gap:12px}
+  .bc{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:14px 16px;display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:16px;scroll-margin-top:10px}
+  .bc.edited{border-color:#e0a33a;box-shadow:0 0 0 3px var(--amber-soft)}
+  .bc.none{grid-template-columns:1fr;opacity:.7;padding:10px 16px}
+  .bc-head{grid-column:1/-1;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .bc-head .no{width:30px;height:30px;border-radius:9px;background:var(--line2);display:grid;place-items:center;font-weight:600;font-size:13px;color:var(--muted);flex:none}
+  .bc-head b{font-weight:600;font-size:15.5px}
+  .bc-head small{color:var(--muted);font-size:13px;margin-right:auto}
+  .bc-media{display:flex;gap:8px;overflow-x:auto;min-height:120px;align-items:flex-start;padding-bottom:4px}
+  .bimg{flex:none;border:0;padding:0;background:#1d2622;border-radius:12px;height:240px;min-width:150px;display:grid;place-items:center;cursor:zoom-in;overflow:hidden;color:#b9c4be;font-size:13px}
+  .bimg img{height:240px;width:auto;display:block}
+  .bc-media .filecard{margin-top:0;flex:none;max-width:260px}
+  .bc-media .answers{flex:1;max-height:260px;overflow:auto;font-size:14px}
+  .bc-form{display:flex;flex-direction:column;gap:8px}
+  .bc-form .seg button{padding:8px 6px;font-size:14px}
+  .bc-form .seg button.p[aria-pressed="true"]{background:var(--brand);color:#fff}
+  .bc-form .seg button.f[aria-pressed="true"]{background:var(--red);color:#fff}
+  .bc-form .score-row .inp{width:80px;font-size:15px;padding:6px 8px}
+  .bc-form .inp.note{padding:7px 10px;font-size:14px}
+  .bc-form .qchips button{font-size:12px;padding:3px 9px}
+  .bv-bar{position:absolute;left:0;right:0;bottom:0;background:#fff;border-top:1px solid var(--line);box-shadow:0 -8px 24px -16px rgba(0,0,0,.25);padding:10px 20px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .bv-bar .muted{margin-right:auto;font-size:14px}
+  .bv-bar .muted b{color:var(--amber);font-weight:600}
+  .gv{position:fixed}
+  @media (max-width:820px){
+    .bv{padding:12px 10px 130px}
+    .bc{grid-template-columns:1fr;padding:12px}
+    .bimg,.bimg img{height:200px}
+    .bv-bar{padding:8px 12px}
+    .bv-bar .btn{flex:1;white-space:nowrap}
+    .bv-bar .muted{flex-basis:100%;font-size:13px}
+  }
   @media (min-width:1100px){
     .gpanel{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:18px;align-items:start}
     .gpanel .gform{position:sticky;top:0;margin-top:0}
@@ -686,13 +720,14 @@ function openGrade(taskId, room) {
   const t = A.data.tasks.find(x => x.id === taskId);
   const rooms = gradeRooms(t);
   if (!rooms.length) return toast('งานนี้ยังไม่ได้มอบให้ห้องใด', true);
-  A.g = { taskId, room: rooms.includes(room) ? room : rooms[0], filter: null, cur: null, imgIdx: 0, form: null, data: null };
+  let mode = 'batch'; try { mode = localStorage.getItem('gradeMode') || 'batch'; } catch (e) {}
+  A.g = { taskId, room: rooms.includes(room) ? room : rooms[0], filter: null, cur: null, imgIdx: 0, form: null, data: null, mode, edits: {} };
   $('gv').classList.remove('hidden');
   document.body.style.overflow = 'hidden';
   loadGrade();
 }
 function closeGrade() {
-  if (A.g && A.g.form && A.g.form.dirty && !confirm('ยังไม่ได้บันทึกผลตรวจของคนนี้ ออกเลยไหม?')) return;
+  if (A.g && gDirty() && !confirm('มีผลตรวจที่ยังไม่ได้บันทึก ออกเลยไหม?')) return;
   A.g = null; $('gv').classList.add('hidden'); document.body.style.overflow = '';
   refresh();
 }
@@ -706,8 +741,9 @@ async function loadGrade() {
     const list = gList();
     g.cur = list.length ? list[0].no : null;
     g.panel = false;
-    renderGrade(); selectStudent(g.cur, true);
-  } catch (e) { toast(errText(e), true); closeGrade(); }
+    renderGrade();
+    if (g.mode === 'batch') renderBatch(); else selectStudent(g.cur, true);
+  } catch (e) { toast(errText(e), true); A.g.edits = {}; closeGrade(); }
 }
 function gState(s) { return !s.sub ? 'none' : s.sub.review === 'pending' ? 'todo' : s.sub.review; }
 function gList() { const g = A.g; return g.data.students.filter(s => g.filter === 'all' || gState(s) === g.filter); }
@@ -732,13 +768,27 @@ function renderGrade() {
     </div>
     <div class="gv-bar">
       <div class="seg" role="group" aria-label="กรอง">${['todo', 'all', 'fail', 'pass', 'none'].map(f => `<button aria-pressed="${g.filter === f}" onclick="gFilter('${f}')">${G_LABEL[f]} ${c[f]}</button>`).join('')}</div>
-      <span class="kbd">คีย์ลัด: <kbd>1</kbd> ผ่าน <kbd>2</kbd> ไม่ผ่าน <kbd>Ctrl</kbd>+<kbd>Enter</kbd> บันทึกแล้วไปคนถัดไป <kbd>←</kbd><kbd>→</kbd> เลื่อนคน</span>
+      <div class="seg" role="group" aria-label="มุมมอง" style="margin-left:auto">
+        <button aria-pressed="${g.mode === 'batch'}" onclick="gMode('batch')">ดูหลายคน</button>
+        <button aria-pressed="${g.mode === 'single'}" onclick="gMode('single')">ทีละคน</button>
+      </div>
+      ${g.mode === 'single' ? '<span class="kbd">คีย์ลัด: <kbd>1</kbd> ผ่าน <kbd>2</kbd> ไม่ผ่าน <kbd>Ctrl</kbd>+<kbd>Enter</kbd> บันทึกแล้วไปคนถัดไป <kbd>←</kbd><kbd>→</kbd> เลื่อนคน</span>' : '<span class="kbd"><kbd>Ctrl</kbd>+<kbd>Enter</kbd> บันทึกทั้งหมด</span>'}
     </div>
-    <div class="gv-body ${g.panel ? 'panel' : ''}" id="gvBody">
+    ${g.mode === 'batch' ? '<div class="bv" id="bv"></div><div class="bv-bar" id="bvBar"></div>' : `<div class="gv-body ${g.panel ? 'panel' : ''}" id="gvBody">
       <nav class="gv-list" id="gvList" aria-label="รายชื่อนักเรียน"></nav>
       <section class="gv-main" id="gvMain"></section>
-    </div>`;
-  renderGList();
+    </div>`}`;
+  if (g.mode !== 'batch') renderGList();
+}
+function gDirty() { return !!(A.g && ((A.g.form && A.g.form.dirty) || Object.keys(A.g.edits || {}).length)); }
+function gMode(m) {
+  const g = A.g; if (g.mode === m) return;
+  if (m === 'single' && Object.keys(g.edits).length && !confirm('มีผลตรวจที่ยังไม่ได้บันทึกในโหมดดูหลายคน สลับโหมดเลยไหม? (ที่เลือกไว้จะหายไป)')) return;
+  if (m === 'batch' && g.form && g.form.dirty && !confirm('ยังไม่ได้บันทึกคนนี้ สลับโหมดเลยไหม?')) return;
+  g.mode = m; g.edits = {}; g.form = null;
+  try { localStorage.setItem('gradeMode', m); } catch (e) {}
+  renderGrade();
+  if (m === 'batch') renderBatch(); else { const l = gList(); if (!l.some(s => s.no === g.cur)) g.cur = l.length ? l[0].no : null; selectStudent(g.cur, true); }
 }
 function renderGList() {
   const g = A.g, list = gList();
@@ -746,8 +796,105 @@ function renderGList() {
       <span class="no">${esc(s.no)}</span><span class="nm">${esc(s.name)}</span>${gChip(s)}</button>`).join('')
     : `<div class="empty">${g.filter === 'todo' ? 'ตรวจครบแล้ว 🎉' : 'ไม่มีรายการ'}</div>`;
 }
-function gRoom(r) { if (A.g.form && A.g.form.dirty && !confirm('ยังไม่ได้บันทึก เปลี่ยนห้องเลยไหม?')) return; A.g.room = r; A.g.filter = null; loadGrade(); }
-function gFilter(f) { A.g.filter = f; const l = gList(); if (!l.some(s => s.no === A.g.cur)) A.g.cur = l.length ? l[0].no : null; renderGrade(); selectStudent(A.g.cur, true); }
+function gRoom(r) { if (gDirty() && !confirm('มีผลตรวจที่ยังไม่ได้บันทึก เปลี่ยนห้องเลยไหม?')) return; A.g.room = r; A.g.filter = null; A.g.edits = {}; loadGrade(); }
+function gFilter(f) {
+  A.g.filter = f;
+  if (A.g.mode === 'batch') { renderGrade(); return renderBatch(); }     // ที่เลือกไว้ยังอยู่ (เก็บตามเลขที่)
+  const l = gList(); if (!l.some(s => s.no === A.g.cur)) A.g.cur = l.length ? l[0].no : null; renderGrade(); selectStudent(A.g.cur, true);
+}
+
+/* ---------- โหมดดูหลายคน: เลือกผลไว้หลายคนแล้วบันทึกครั้งเดียว ---------- */
+let BV_OBS = null;
+function bvVal(s) { const e = A.g.edits[s.no]; return e || { review: s.sub.review, score: s.sub.score, note: s.sub.note }; }
+function renderBatch() {
+  const g = A.g, list = gList();
+  $('bv').innerHTML = `<div class="bv-wrap">${list.length ? list.map(s => `<article class="bc ${s.sub ? '' : 'none'}" id="bc-${esc(s.no)}">${bcInner(s)}</article>`).join('')
+    : `<div class="empty">${g.filter === 'todo' ? 'ตรวจครบแล้ว 🎉' : 'ไม่มีรายการ'}</div>`}</div>`;
+  renderBvBar();
+  // โหลดรูปเฉพาะการ์ดที่เลื่อนมาใกล้จอ
+  if (BV_OBS) BV_OBS.disconnect();
+  BV_OBS = new IntersectionObserver(ents => ents.forEach(en => { if (en.isIntersecting) { BV_OBS.unobserve(en.target); bvLoadMedia(en.target.dataset.no); } }),
+    { root: $('bv'), rootMargin: '600px 0px' });
+  document.querySelectorAll('.bc-media[data-no]').forEach(el => BV_OBS.observe(el));
+}
+function bcInner(s) {
+  const t = A.g.data.task, sub = s.sub;
+  const head = `<div class="bc-head"><span class="no">${esc(s.no)}</span><b>${esc(s.name)}</b>
+    <small>${sub ? `ส่ง ${esc(sub.time)}${sub.count > 1 ? ` · ครั้งที่ ${sub.count}` : ''}` : ''}</small>
+    ${sub && sub.status === 'ส่งช้า' ? '<span class="tag a">ส่งช้า</span>' : ''}${gChip(s)}</div>`;
+  if (!sub) return head;
+  let media;
+  if (t.type === 'quiz') media = `<pre class="answers">${esc(sub.text || '(ไม่มีคำตอบ)')}</pre>`;
+  else media = sub.files.map((f, k) => f.image
+      ? `<button class="bimg" data-id="${esc(f.id)}" onclick="openLbFor('${esc(s.no)}',${sub.files.filter(x => x.image).indexOf(f)})" aria-label="รูปที่ ${k + 1} ของ ${esc(s.name)}">กำลังโหลด…</button>`
+      : `<a class="filecard" href="${esc(f.url)}" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg><span style="overflow-wrap:anywhere">${esc(f.name)}</span></a>`).join('') || '<span class="muted">ไม่มีไฟล์แนบ</span>';
+  return head + `<div class="bc-media" data-no="${esc(s.no)}">${media}</div><div class="bc-form" id="bf-${esc(s.no)}">${bcForm(s)}</div>`;
+}
+function bcForm(s) {
+  const v = bvVal(s), t = A.g.data.task, no = esc(s.no);
+  return `<div class="seg" role="group" aria-label="ผลตรวจของ ${esc(s.name)}">
+      <button class="p" aria-pressed="${v.review === 'pass'}" onclick="bvSet('${no}','review','pass')">✓ ผ่าน</button>
+      <button class="f" aria-pressed="${v.review === 'fail'}" onclick="bvSet('${no}','review','fail')">✗ ไม่ผ่าน</button>
+      <button aria-pressed="${v.review === 'pending'}" onclick="bvSet('${no}','review','pending')">รอตรวจ</button></div>
+    ${v.review === 'pass' ? `<div class="score-row"><label for="bs-${no}" style="font-size:13.5px">คะแนน</label><input id="bs-${no}" class="inp" type="number" min="0" max="${t.full}" step="0.5" placeholder="${t.full}" value="${esc(v.score)}" oninput="bvSet('${no}','score',this.value,true)"><span class="muted" style="font-size:13px">/ ${t.full}</span></div>` : ''}
+    <input class="inp note" id="bn-${no}" value="${esc(v.note)}" placeholder="หมายเหตุถึงนักเรียน${v.review === 'fail' ? ' (ควรบอกว่าต้องแก้อะไร)' : ''}" oninput="bvSet('${no}','note',this.value,true)" aria-label="หมายเหตุถึง ${esc(s.name)}">
+    <div class="qchips">${QUICK_NOTES.slice(0, 4).map(q => `<button type="button" onclick="bvQuick('${no}','${esc(q)}')">${esc(q)}</button>`).join('')}</div>`;
+}
+function bvSet(no, k, val, silent) {
+  const g = A.g, s = g.data.students.find(x => x.no === no);
+  const e = g.edits[no] || (g.edits[no] = { review: s.sub.review, score: s.sub.score, note: s.sub.note });
+  e[k] = val;
+  if (e.review === s.sub.review && String(e.score) === String(s.sub.score) && e.note === s.sub.note) delete g.edits[no];   // กลับเป็นค่าเดิม
+  $('bc-' + no).classList.toggle('edited', !!g.edits[no]);
+  if (!silent) $('bf-' + no).innerHTML = bcForm(s);
+  renderBvBar();
+}
+function bvQuick(no, q) {
+  const s = A.g.data.students.find(x => x.no === no), v = bvVal(s);
+  bvSet(no, 'note', v.note ? v.note.trim() + ' ' + q : q, true);
+  if (/ไม่ครบ|ไม่ชัด|ผิด/.test(q) && bvVal(s).review !== 'fail') bvSet(no, 'review', 'fail');
+  else $('bf-' + no).innerHTML = bcForm(s);
+}
+function bvPassAll() {
+  const list = gList().filter(s => s.sub && bvVal(s).review === 'pending');
+  if (!list.length) return toast('ไม่มีคนที่รอตรวจในรายการนี้');
+  list.forEach(s => bvSet(s.no, 'review', 'pass'));
+  toast(`เลือก "ผ่าน" ให้ ${list.length} คนแล้ว · ยังไม่ได้บันทึก`);
+}
+function bvReset() { if (!confirm('ยกเลิกผลที่เลือกไว้ทั้งหมด?')) return; A.g.edits = {}; renderBatch(); }
+function renderBvBar() {
+  const g = A.g, n = Object.keys(g.edits).length;
+  const pend = gList().filter(s => s.sub && bvVal(s).review === 'pending').length;
+  $('bvBar').innerHTML = `<span class="muted">${n ? `เลือกผลไว้ <b>${n} คน</b> · ยังไม่ได้บันทึก` : 'เลือกผลตรวจของแต่ละคน แล้วกดบันทึกทีเดียว'}</span>
+    ${pend ? `<button class="btn ghost sm" onclick="bvPassAll()">ผ่านทุกคนที่รอตรวจ (${pend})</button>` : ''}
+    ${n ? '<button class="btn plain sm" onclick="bvReset()">ยกเลิกที่เลือก</button>' : ''}
+    <button class="btn" id="bvSave" onclick="bvSave()" ${n ? '' : 'disabled'}>บันทึกทั้งหมด${n ? ` (${n})` : ''}</button>`;
+}
+async function bvSave() {
+  const g = A.g, nos = Object.keys(g.edits);
+  if (!nos.length) return;
+  const noNote = nos.filter(no => g.edits[no].review === 'fail' && !String(g.edits[no].note).trim()).length;
+  if (noNote && !confirm(`มี ${noNote} คนที่ "ไม่ผ่าน" แต่ยังไม่ได้เขียนหมายเหตุ บันทึกเลยไหม?`)) return;
+  const items = nos.map(no => { const s = g.data.students.find(x => x.no === no), e = g.edits[no];
+    return { row: s.sub.row, no, result: e.review, score: e.review === 'pass' ? e.score : '', note: e.note }; });
+  $('bvSave').disabled = true; loading(true);
+  try {
+    const r = await run('adminGradeBatch', A.token, g.taskId, g.room, items);
+    r.saved.forEach(x => { const s = g.data.students.find(y => y.no === x.no); Object.assign(s.sub, { review: x.review, score: x.score, note: x.note }); delete g.edits[x.no]; });
+    loading(false);
+    const top = $('bv').scrollTop;
+    renderGrade(); renderBatch(); $('bv').scrollTop = Math.min(top, $('bv').scrollHeight);
+    if (r.errors.length) toast(`บันทึก ${r.saved.length} คน · ไม่สำเร็จ ${r.errors.length}: ${r.errors.map(e => (e.no ? 'เลขที่ ' + e.no + ' ' : '') + e.error).join(' / ')}`, true);
+    else toast(`บันทึกผลตรวจ ${r.saved.length} คนเรียบร้อย`);
+  } catch (e) { loading(false); toast(errText(e), true); if ($('bvSave')) $('bvSave').disabled = false; }
+}
+function bvLoadMedia(no) {
+  const el = document.querySelector(`.bc-media[data-no="${CSS.escape(no)}"]`); if (!el) return;
+  el.querySelectorAll('.bimg[data-id]').forEach(b => loadImg(b.dataset.id)
+    .then(r => { b.innerHTML = r.src ? `<img src="${r.src}" alt="">` : 'เปิดใน Drive'; if (!r.src) b.onclick = () => window.open(r.url, '_blank'); })
+    .catch(() => { b.textContent = 'โหลดรูปไม่ได้'; }));
+}
+function openLbFor(no, k) { A.g.cur = no; openLb(k); }
 
 function selectStudent(no, keepPanel) {
   const g = A.g;
@@ -892,6 +1039,11 @@ document.addEventListener('keydown', ev => {
     return;
   }
   const typing = /INPUT|TEXTAREA/.test((document.activeElement || {}).tagName || '');
+  if (A.g.mode === 'batch') {
+    if ((ev.ctrlKey || ev.metaKey) && ev.key === 'Enter') { ev.preventDefault(); bvSave(); }
+    else if (ev.key === 'Escape' && !typing) closeGrade();
+    return;
+  }
   if ((ev.ctrlKey || ev.metaKey) && ev.key === 'Enter') { ev.preventDefault(); if (A.g.form) gSave(true); return; }
   if (typing) return;
   if (ev.key === '1' && A.g.form) gSet('review', 'pass');
