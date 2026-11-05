@@ -1,0 +1,32 @@
+/* ===== Ocean Depths — ใช้ร่วมกันทุกหน้า =====
+   navy  #1a2332  พื้นหัวเว็บ
+   teal  #1f6f70  ปุ่ม/ลิงก์ (เข้มพอสำหรับตัวหนังสือ)   #2d8b8b เน้น
+   seafoam #a8dadc เส้นและรายละเอียดบนพื้นเข้ม
+   cream #eef5f4  พื้นหลังหน้า                                   */
+:root{--navy:#1a2332;--navy-2:#22304a;--teal:#1f6f70;--teal-2:#2d8b8b;--seafoam:#a8dadc;--cream:#eef5f4}
+
+body{font-feature-settings:"kern"}
+h1,h2,h3{letter-spacing:0}
+
+/* หัวเว็บ: น้ำลึก + เส้นชั้นความลึก */
+header{
+  background:var(--navy) url(depth.svg) no-repeat right -120px center/auto 150% !important;
+  border-radius:0 !important;
+  border-bottom:3px solid var(--teal-2);
+}
+header::before,header::after,header .blob,header .leaf{display:none !important}
+header h1{font-weight:600}
+header .home{color:var(--seafoam) !important;opacity:1 !important}
+header .home:hover{color:#fff !important}
+
+/* หน้าครู: แถบบน */
+.top{background:var(--navy) url(depth.svg) no-repeat right -80px center/auto 260% !important;border-bottom:3px solid var(--teal-2)}
+
+/* โฟกัสคีย์บอร์ดให้เห็นชัด */
+a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--teal-2);outline-offset:2px}
+
+::selection{background:var(--seafoam);color:var(--navy)}
+
+@media (max-width:520px){
+  header{background-position:right -260px center !important;background-size:auto 130% !important}
+}

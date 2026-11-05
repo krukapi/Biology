@@ -3,20 +3,20 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="theme-color" content="#2f6b52">
+<meta name="theme-color" content="#1a2332">
 <title>คู่มือการใช้งาน · ระบบส่งงาน</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Anuphan:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root{
-    --bg:#f5f7f6; --card:#fff; --ink:#18241e; --text:#3c4741; --muted:#66716b; --line:#e3e9e5;
-    --green:#2f6b52; --green-2:#3d8466; --soft:#e8f3ed;
+    --bg:#eef5f4; --card:#fff; --ink:#1a2332; --text:#33404f; --muted:#5d6978; --line:#dae6e6;
+    --green:#1f6f70; --green-2:#2d8b8b; --soft:#e2f1f0;
     --tap:#d9730d; --tap-soft:#fff1e3;
     --red:#b3261e; --red-soft:#fce8e6; --orange:#9a5800; --orange-soft:#fff1dc;
   }
   *{box-sizing:border-box;margin:0}
   html{scroll-behavior:smooth;scroll-padding-top:16px}
-  body{font-family:'Anuphan',system-ui,sans-serif;background:var(--bg);color:var(--ink);font-size:16px;line-height:1.6;-webkit-font-smoothing:antialiased}
+  body{font-family:'IBM Plex Sans Thai',system-ui,sans-serif;background:var(--bg);color:var(--ink);font-size:16px;line-height:1.6;-webkit-font-smoothing:antialiased}
   .wrap{max-width:920px;margin:0 auto;padding:0 20px}
   .nw{white-space:nowrap}
   a{color:var(--green)}
@@ -50,16 +50,17 @@
   .step ul,.step ol{color:var(--text);padding-left:20px;margin-top:8px}
   .step li{margin:4px 0}
   .ui{display:inline-block;font-weight:600;color:var(--green);background:var(--soft);padding:0 8px;border-radius:7px;white-space:nowrap;font-size:15px}
-  .note{margin-top:14px;font-size:15px;color:var(--text);background:#f6f8f7;border-radius:14px;padding:12px 14px;display:flex;gap:10px}
+  .note{margin-top:14px;font-size:15px;color:var(--text);background:#f6fbf9;border-radius:14px;padding:12px 14px;display:flex;gap:10px}
   .note svg{flex:none;width:20px;height:20px;color:var(--green);margin-top:2px}
   .note.warn{background:var(--tap-soft)}
   .note.warn svg{color:var(--tap)}
 
   /* ---------- phone mock ---------- */
-  .phone{width:250px;margin:0 auto;border:8px solid #1d2622;border-radius:34px;background:var(--bg);overflow:hidden;font-size:11.5px;line-height:1.45;box-shadow:0 18px 40px -22px rgba(24,36,30,.45);position:relative;user-select:none}
+  .phone{width:250px;margin:0 auto;border:8px solid #1a2332;border-radius:34px;background:var(--bg);overflow:hidden;font-size:11.5px;line-height:1.45;box-shadow:0 18px 40px -22px rgba(26,35,50,.45);position:relative;user-select:none}
   .ph-bar{background:#fff;padding:16px 10px 7px;font-size:10.5px;color:var(--muted);display:flex;align-items:center;gap:6px;border-bottom:1px solid var(--line)}
-  .ph-bar span{flex:1;background:#eef2f0;border-radius:8px;padding:3px 8px;text-align:center}
-  .ph-top{background:linear-gradient(135deg,var(--green),var(--green-2));color:#fff;padding:12px 12px 14px;border-radius:0 0 16px 16px}
+  .ph-bar span{flex:1;background:#ebf3f2;border-radius:8px;padding:3px 8px;text-align:center}
+  .ph-top{background:#1a2332;color:#fff;padding:12px 12px 14px;border-bottom:2px solid #2d8b8b}
+  .ph-top i{color:#a8dadc}
   .ph-top b{display:block;font-size:14px;font-weight:600}
   .ph-top i{font-style:normal;opacity:.8;font-size:10.5px}
   .ph-body{padding:10px;display:flex;flex-direction:column;gap:7px;min-height:290px}
@@ -67,7 +68,7 @@
   .ph-card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:9px}
   .ph-menu{display:flex;align-items:center;gap:8px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:8px}
   .ph-menu .ic{width:28px;height:28px;border-radius:9px;background:var(--soft);flex:none}
-  .ph-menu.blue .ic{background:#e7f0fb}
+  .ph-menu.blue .ic{background:#e5eef7}
   .ph-menu small{display:block;color:var(--muted);font-size:9.5px}
   .ph-menu.dim{opacity:.5;border-style:dashed}
   .ph-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px}
@@ -90,15 +91,15 @@
   .ph-due{color:var(--muted);font-size:9.5px;margin-bottom:6px}
   .bdg{font-size:9px;font-weight:600;padding:1px 7px;border-radius:999px}
   .bdg.g{background:var(--soft);color:var(--green)} .bdg.o{background:var(--orange-soft);color:var(--orange)} .bdg.r{background:var(--red-soft);color:var(--red)}
-  .ph-sent{background:#f6f8f7;border-radius:8px;padding:6px 8px;font-size:9.5px;margin-bottom:6px}
+  .ph-sent{background:#f6fbf9;border-radius:8px;padding:6px 8px;font-size:9.5px;margin-bottom:6px}
   .ph-shade{position:absolute;inset:0;background:rgba(0,0,0,.35);display:flex;align-items:flex-end}
   .ph-sheet{background:#fff;width:100%;border-radius:18px 18px 0 0;padding:12px;display:flex;flex-direction:column;gap:7px}
-  .ph-drop{border:1.5px dashed #9fc4b2;background:var(--soft);border-radius:12px;padding:14px 6px;text-align:center;color:var(--green);font-weight:600}
+  .ph-drop{border:1.5px dashed #9ccfd1;background:var(--soft);border-radius:12px;padding:14px 6px;text-align:center;color:var(--green);font-weight:600}
   .ph-file{display:flex;justify-content:space-between;border-bottom:1px solid var(--line);padding:4px 0;font-size:10.5px}
   .ph-file em{font-style:normal;color:var(--red)}
   .ph-actions{display:flex;gap:6px}.ph-actions>*{flex:1}
   .ph-choice{display:flex;align-items:center;gap:7px;border:1px solid var(--line);border-radius:10px;padding:5px 7px}
-  .ph-choice .cl{width:18px;height:18px;border-radius:6px;background:#eef2f0;color:var(--muted);display:grid;place-items:center;font-weight:600;font-size:9.5px}
+  .ph-choice .cl{width:18px;height:18px;border-radius:6px;background:#ebf3f2;color:var(--muted);display:grid;place-items:center;font-weight:600;font-size:9.5px}
   .ph-choice.on{border-color:var(--green);background:var(--soft)}
   .ph-choice.on .cl{background:var(--green);color:#fff}
   .ph-area{border:1px solid var(--line);border-radius:10px;padding:6px 8px;min-height:38px;color:var(--ink)}
@@ -126,7 +127,7 @@
   .cta h2{font-size:22px;font-weight:600}
   .cta p{color:var(--muted)}
   .btn{display:inline-flex;align-items:center;gap:8px;background:var(--green);color:#fff;text-decoration:none;font-weight:500;padding:12px 22px;border-radius:14px;transition:background .15s}
-  .btn:hover{background:#245541}
+  .btn:hover{background:#185a5b}
   .btn svg{width:18px;height:18px}
   footer{text-align:center;color:#8f9a94;font-size:13px;padding:8px 0 36px}
 
@@ -137,6 +138,7 @@
   }
   @media (prefers-reduced-motion:reduce){.tap{animation:none}html{scroll-behavior:auto}}
 </style>
+<link rel="stylesheet" href="../theme.css">
 </head>
 <body>
 
