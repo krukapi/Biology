@@ -106,6 +106,13 @@
   .watermark{position:fixed;inset:-50%;z-index:4;pointer-events:none;display:flex;flex-wrap:wrap;align-content:flex-start;gap:70px 90px;transform:rotate(-24deg);opacity:.07;font-weight:600;font-size:17px;color:#1a2332;padding:40px;user-select:none}
   body.noselect .who .link{display:none}
   .noselect{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+  /* ระหว่างสอบ: ปิดการดึงหน้าลงเพื่อรีเฟรช และการเด้งของหน้าเวลาเลื่อนสุด */
+  html.exam-on,html.exam-on body{overscroll-behavior:none}
+  html.exam-on{touch-action:pan-x pan-y pinch-zoom}   /* ปิดแตะสองครั้งเพื่อซูม (ยังซูมด้วยสองนิ้วได้) */
+  .fsback{position:fixed;left:50%;bottom:calc(16px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:60;
+    background:#1a2332;color:#fff;border:0;border-radius:999px;padding:12px 20px;font:inherit;font-size:15px;font-weight:500;
+    box-shadow:0 10px 28px -10px rgba(16,24,36,.6);cursor:pointer;white-space:nowrap}
+  .fsback.hidden{display:none}
   .overlay{position:fixed;inset:0;z-index:30;background:rgba(26,35,50,.72);display:flex;align-items:center;justify-content:center;padding:20px}
   .dialog{background:#fff;border-radius:22px;padding:24px 22px;max-width:420px;width:100%;text-align:center}
   .dialog .ico{width:58px;height:58px;border-radius:50%;margin:0 auto 12px;display:grid;place-items:center;background:var(--amber-soft);color:var(--amber)}
@@ -168,7 +175,7 @@
         <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M12 3v18"/></svg>
           <div><b>ห้ามแบ่งหน้าจอหรือเปิดหน้าต่างลอย</b><span>ต้องเปิดข้อสอบเต็มจออย่างเดียว</span></div></li>
         <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M21 8V5a2 2 0 0 0-2-2h-3"/><path d="M3 16v3a2 2 0 0 0 2 2h3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/></svg>
-          <div><b>ห้ามย่อหน้าจอหรือออกจากโหมดเต็มจอ</b><span>ห้ามรีเฟรชหรือปิดหน้าระหว่างทำ</span></div></li>
+          <div><b>ห้ามย่อหน้าจอหรือสลับไปแอปอื่น</b><span>ห้ามรีเฟรชหรือปิดหน้าระหว่างทำ</span></div></li>
         <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3z"/><circle cx="12" cy="13" r="3"/></svg>
           <div><b>ห้ามแคปหน้าจอหรือถ่ายรูปข้อสอบ</b><span>ข้อสอบมีชื่อของเราพิมพ์จาง ๆ อยู่ทุกหน้า</span></div></li>
       </ul>
@@ -475,6 +482,7 @@ const Guard = {
     this.fsWanted = this.canFs();
     if (this.fsWanted && !this.fsEl()) this.enterFullscreen();
     document.body.classList.add('noselect');
+    document.documentElement.classList.add('exam-on');
     this.watermark(true);
     this.incident = true;                         // ช่วงเข้าเต็มจอตอนเริ่ม ยังไม่นับ
     setTimeout(() => this.baseline(), 900);
@@ -483,11 +491,23 @@ const Guard = {
   stop() {
     this.on = false; this.paused = false;
     document.body.classList.remove('noselect');
+    document.documentElement.classList.remove('exam-on');
+    this.fsPrompt(false);
     this.watermark(false);
     $('guard').classList.add('hidden'); $('warn').classList.add('hidden');
     if (this.fsEl()) this.exitFullscreen();
   },
   pause() { this.paused = true; },
+  fsPrompt(show) {
+    let b = document.getElementById('fsback');
+    if (!b) {
+      b = document.createElement('button'); b.id = 'fsback'; b.className = 'fsback hidden'; b.type = 'button';
+      b.textContent = 'แตะเพื่อกลับเข้าโหมดเต็มจอ';
+      b.onclick = () => { this.enterFullscreen(); this.fsPrompt(false); };
+      document.body.appendChild(b);
+    }
+    b.classList.toggle('hidden', !show);
+  },
   resumeWatch() { this.paused = false; this.incident = true; this.presentSince = Date.now(); this.baseline(); },
   // ทิศทางของ "เครื่อง" (ไม่ใช่หน้าต่าง) — การแบ่งจอไม่ทำให้ค่านี้เปลี่ยน แต่การหมุนเครื่องเปลี่ยน
   orient() {
@@ -581,13 +601,32 @@ const Guard = {
     setInterval(() => this.poll(), 500);
     ['visibilitychange'].forEach(ev => document.addEventListener(ev, () => this.poll()));
     ['blur', 'focus'].forEach(ev => window.addEventListener(ev, () => setTimeout(() => this.poll(), 30)));
-    const onFs = () => { if (this.on && this.fsWanted && !this.fsEl()) this.flag('ออกจากโหมดเต็มจอ'); };
+    // ออกจากเต็มจออย่างเดียวยังไม่ได้เปิดดูอะไร (มักเกิดจากปัดขอบจอ/กดย้อนกลับโดยไม่ตั้งใจ) จึงไม่นับ
+    // ถ้าออกไปเปิดแอปหรือแท็บอื่นต่อ ระบบตรวจสลับแอปจะจับได้อยู่แล้ว
+    const onFs = () => {
+      if (!this.on || !this.fsWanted) return;
+      if (this.fsEl()) return this.fsPrompt(false);
+      this.fsPrompt(true);
+      this.minor('ออกจากโหมดเต็มจอ (ไม่นับ)');
+      setTimeout(() => this.baseline(), 900);
+    };
     document.addEventListener('fullscreenchange', onFs);
     document.addEventListener('webkitfullscreenchange', onFs);
+    const zoomed = () => window.visualViewport && window.visualViewport.scale > 1.02;   // ซูมด้วยนิ้ว
+    const small = () => window.innerWidth < this.base.w * 0.8 || window.innerHeight < this.base.h * 0.62;
+    let rzTimer = 0;
     window.addEventListener('resize', () => {
       if (!this.on || !this.base || this.paused) return;
       if (this.orient() !== this.base.o) { setTimeout(() => this.baseline(), 700); return; }   // หมุนเครื่อง ไม่นับ
-      if (window.innerWidth < this.base.w * 0.8 || window.innerHeight < this.base.h * 0.62) this.flag('แบ่งหน้าจอหรือเปิดหน้าต่างซ้อน');
+      if (zoomed()) return;
+      if (window.innerWidth > this.base.w || window.innerHeight > this.base.h) this.baseline();  // แถบเบราว์เซอร์ซ่อน → จอใหญ่ขึ้น
+      clearTimeout(rzTimer);
+      if (!small()) return;
+      // รอให้หน้าจอนิ่ง 1.5 วินาทีก่อน ถ้ายังเล็กอยู่จริงค่อยนับ
+      rzTimer = setTimeout(() => {
+        if (!this.on || this.paused || zoomed() || this.orient() !== this.base.o) return;
+        if (small()) this.flag('แบ่งหน้าจอหรือเปิดหน้าต่างซ้อน');
+      }, 1500);
     });
     document.addEventListener('keyup', e => {
       if (!this.on) return;
@@ -602,6 +641,14 @@ const Guard = {
       if ((e.ctrlKey || e.metaKey) && ['p', 'c', 's', 'u'].includes(k)) e.preventDefault();
       if (e.metaKey && e.shiftKey && ['3', '4', '5', 's'].includes(k)) this.flag('กดแคปหน้าจอ');
     });
+    // Safari บน iPhone รุ่นเก่ายังดึงหน้าลงเพื่อรีเฟรชได้ แม้ตั้ง overscroll แล้ว → กันด้วยมือ
+    let ty = 0;
+    document.addEventListener('touchstart', e => { if (e.touches.length === 1) ty = e.touches[0].clientY; }, { passive: true });
+    document.addEventListener('touchmove', e => {
+      if (!this.on || e.touches.length !== 1) return;
+      const atTop = (window.scrollY || document.documentElement.scrollTop) <= 0;
+      if (atTop && e.touches[0].clientY > ty && e.cancelable) e.preventDefault();
+    }, { passive: false });
     window.addEventListener('beforeprint', () => this.flag('สั่งพิมพ์หน้าข้อสอบ'));
     ['copy', 'cut', 'contextmenu', 'dragstart'].forEach(ev => document.addEventListener(ev, e => { if (this.on) e.preventDefault(); }));
     // ปิด/รีเฟรชหน้าระหว่างสอบ: ส่งรายงานแบบ beacon (ทำงานแม้หน้าถูกปิด)
