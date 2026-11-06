@@ -57,6 +57,21 @@
   .rv-pending{background:#eff6f4;color:#4d5852}
   .rv-pass{background:var(--brand-soft);color:var(--brand-dark)}
   .rv-fail{background:var(--red-soft);color:var(--red)}
+  .fail-alert{background:#fff;border:1.5px solid #f0b4ad;border-radius:16px;padding:14px 16px 10px;margin:0 0 14px;box-shadow:0 0 0 4px #fdeeec}
+  .fail-alert.hidden{display:none}
+  .fa-head{display:flex;gap:12px;align-items:flex-start}
+  .fa-head svg{flex:none;width:24px;height:24px;color:var(--red);margin-top:1px}
+  .fa-head b{display:block;font-size:16px;color:var(--red)}
+  .fa-head span{display:block;font-size:14px;color:var(--muted);margin-top:1px}
+  .fail-alert ul{list-style:none;padding:0;margin:8px 0 0 36px}
+  .fail-alert li + li{border-top:1px solid #f6dcd8}
+  .fail-alert li button{all:unset;box-sizing:border-box;display:block;width:100%;padding:8px 0;cursor:pointer}
+  .fail-alert li button:focus-visible{outline:2px solid var(--red);outline-offset:2px;border-radius:6px}
+  .fa-title{display:block;font-weight:600;font-size:15px;color:var(--ink);text-decoration:underline;text-decoration-color:#f0b4ad;text-underline-offset:3px}
+  .fa-note{display:block;font-size:13.5px;color:#7b4a44;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .card.flash{animation:flash 1.4s ease}
+  @keyframes flash{0%,40%{box-shadow:0 0 0 6px #f6c9c3}100%{box-shadow:0 0 0 3px #fdeeec}}
+  @media (prefers-reduced-motion:reduce){.card.flash{animation:none}}
   .tab .dot{display:inline-grid;place-items:center;min-width:20px;height:20px;padding:0 6px;margin-left:6px;border-radius:999px;background:var(--red);color:#fff;font-size:12px;font-weight:600;line-height:1}
   .sent{background:#f6fbf9;border-radius:10px;padding:10px 12px;font-size:14px;margin-bottom:10px}
   .sent ul{margin:4px 0 0;padding-left:20px}
@@ -179,6 +194,7 @@
       </div>
       <div class="score-num"><span id="scoreVal">–</span><small id="scoreFull"></small></div>
     </div>
+    <div id="failAlert" class="fail-alert hidden" role="alert"></div>
     <div class="tabs">
       <button id="tabPending" class="tab on" onclick="setTab('pending')">งานค้าง</button>
       <button id="tabDone" class="tab" onclick="setTab('done')">ส่งแล้ว</button>
@@ -466,9 +482,31 @@ function renderTasks() {
   $('tabDone').innerHTML = `ส่งแล้ว (${done.length})${fails ? `<span class="dot" aria-label="ต้องแก้ ${fails} งาน">${fails}</span>` : ''}`;
   $('tabPending').classList.toggle('on', state.tab === 'pending');
   $('tabDone').classList.toggle('on', state.tab === 'done');
+  renderFailAlert(done.filter(t => t.review === 'fail'));
   const list = state.tab === 'pending' ? pending : done;
   $('tasks').innerHTML = list.length ? list.map(card).join('')
     : `<div class="empty">${state.tab === 'pending' ? 'ไม่มีงานค้าง เยี่ยมมาก' : 'ยังไม่มีงานที่ส่ง'}</div>`;
+}
+
+/* แจ้งเตือนงานที่ตรวจไม่ผ่าน: แสดงทั้งสองแท็บ จนกว่านักเรียนจะแก้แล้วส่งใหม่ */
+const X_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>';
+function renderFailAlert(fails) {
+  const el = $('failAlert');
+  if (!fails.length) { el.classList.add('hidden'); el.innerHTML = ''; return; }
+  const head = `<div class="fa-head">${X_ICON}<div><b>มีงานที่ตรวจไม่ผ่าน ${fails.length} งาน</b>
+    <span>${state.tab === 'done' ? 'อ่านสิ่งที่ครูให้แก้ แล้วกดส่งใหม่ในงานนั้น' : 'แก้ตามที่ครูบอก แล้วส่งใหม่ให้ครูตรวจอีกครั้ง'}</span></div></div>`;
+  const items = fails.map(t => `<li><button type="button" onclick="goFail('${esc(t.id)}')">
+      <span class="fa-title">${esc(t.title)}</span>${t.note ? `<span class="fa-note">ครูบอกว่า: ${esc(t.note)}</span>` : ''}
+    </button></li>`).join('');
+  el.innerHTML = head + `<ul>${items}</ul>`;
+  el.classList.remove('hidden');
+}
+function goFail(id) {
+  if (state.tab !== 'done') setTab('done');
+  const c = document.getElementById('task-' + id);
+  if (!c) return;
+  c.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'center' });
+  c.classList.remove('flash'); void c.offsetWidth; c.classList.add('flash');
 }
 
 function card(t) {
@@ -490,7 +528,7 @@ function card(t) {
   }[t.review];
   const review = t.submitted && RV ? `<div class="review ${RV[0]}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${RV[1]}</svg>
       <div><b>${RV[2]}</b>${t.note ? `<p>ครู: ${esc(t.note)}</p>` : ''}</div></div>` : '';
-  return `<article class="card${fail ? ' fail' : ''}">
+  return `<article class="card${fail ? ' fail' : ''}" id="task-${esc(t.id)}">
     <div class="card-top"><span>${typeTag}${esc(t.period)} · ${esc(t.full)} คะแนน</span>${badge}</div>
     <h3>${esc(t.title)}</h3>
     ${t.desc ? `<p class="desc">${esc(t.desc)}</p>` : ''}
