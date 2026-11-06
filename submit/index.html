@@ -127,6 +127,8 @@
   .q textarea:focus{outline:2px solid var(--brand);border-color:transparent}
   .type{font-size:12px;font-weight:700;background:var(--brand-soft);color:var(--brand-dark);padding:1px 8px;border-radius:999px;margin-right:6px}
   .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:12px 18px;border-radius:12px;font-size:15px;z-index:30;max-width:90vw;text-align:center}
+  .syncing{position:fixed;top:12px;left:50%;transform:translateX(-50%);z-index:40;background:#1a2332;color:#a8dadc;font-size:13px;padding:6px 14px;border-radius:999px;box-shadow:0 6px 18px -8px rgba(16,24,36,.5)}
+  .syncing.hidden{display:none}
 </style>
 <link rel="stylesheet" href="../theme.css">
 </head>
@@ -141,6 +143,7 @@
 
 <main class="wrap">
   <div id="banner" class="banner hidden"></div>
+  <div id="syncing" class="syncing hidden" role="status">กำลังอัปเดตข้อมูลล่าสุด…</div>
 
   <section id="step-room" class="hidden">
     <h2>เลือกห้องเรียน</h2>
@@ -148,7 +151,7 @@
   </section>
 
   <section id="step-name" class="hidden">
-    <button class="link" onclick="showRooms()">← เปลี่ยนห้อง</button>
+    <button class="link" onclick="backToRooms()">← เปลี่ยนห้อง</button>
     <h2>เลือกชื่อของตัวเอง <span id="roomLabel" class="muted"></span></h2>
     <input id="search" type="search" placeholder="ค้นหาชื่อหรือเลขที่" oninput="renderStudents()">
     <div id="students" class="list"></div>
@@ -241,6 +244,13 @@ function banner(e) { const b = $('banner'); if (!e) return b.classList.add('hidd
 function toast(t) { const d = document.createElement('div'); d.className = 'toast'; d.textContent = t; document.body.appendChild(d); setTimeout(() => d.remove(), 4000); }
 
 async function init() {
+  // เคยเข้าระบบในเครื่องนี้แล้ว → เข้าหน้างานทันที ไม่ต้องโหลดรายชื่อห้อง/นักเรียนใหม่
+  const r0 = load('room'), n0 = load('no'), p0 = load('pin'), nm = load('name');
+  if (r0 && n0 && p0 && nm) {
+    state.room = r0; state.student = { no: n0, name: nm }; state.pin = p0;
+    $('roomLabel').textContent = roomName(r0);
+    return enterTasks();
+  }
   loading(true);
   try {
     state.rooms = await run('getRooms');
@@ -251,6 +261,10 @@ async function init() {
   loading(false);
 }
 
+async function backToRooms() {
+  if (!state.rooms.length) { loading(true); try { state.rooms = await run('getRooms'); } catch (e) { banner(e); } loading(false); }
+  showRooms();
+}
 function showRooms() {
   banner(null);
   $('who').innerHTML = '';
@@ -318,7 +332,7 @@ async function doLogin() {
   try {
     await run('login', state.room, state.student.no, p1);
     state.pin = p1;
-    store('no', state.student.no); store('pin', p1);
+    store('no', state.student.no); store('pin', p1); store('name', state.student.name);
     loading(false);
     await enterTasks();
   } catch (e) {
@@ -328,6 +342,7 @@ async function doLogin() {
 }
 
 async function enterTasks() {
+  store('name', state.student.name);
   $('who').innerHTML = `<span>${esc(state.student.name)} · ${esc(roomName(state.room))} เลขที่ ${esc(state.student.no)}</span>
     <button class="link light" onclick="logout()">ออกจากระบบ</button>`;
   state.tab = 'pending';
@@ -341,30 +356,41 @@ function authFail() {
   showPin();
 }
 
-function logout() {
+async function logout() {
   state.annLoaded = false; state.anns = []; $('annBtn').classList.add('hidden');
-  store('no', null); store('pin', null);
+  if (state.student) store(homeKey(), null);
+  store('no', null); store('pin', null); store('name', null);
   state.student = null; state.pin = null;
   $('who').innerHTML = '';
   $('search').value = '';
+  if (!state.students.length) {                   // เข้ามาทางลัด ยังไม่มีรายชื่อ → โหลดก่อน
+    loading(true);
+    try { state.students = await run('getStudents', state.room); } catch (e) { banner(e); }
+    loading(false);
+  }
   renderStudents();
   show('step-name');
 }
 
+const homeKey = () => `home:${state.room}:${state.student.no}`;
 async function loadTasks() {
-  loading(true);
+  // แสดงข้อมูลล่าสุดที่เคยโหลดไว้ทันที แล้วค่อยอัปเดตจากเซิร์ฟเวอร์ (โหลดครั้งเดียวได้ทั้งงาน คะแนน ประกาศ)
+  let cachedShown = false;
   try {
-    const [tasks, score] = await Promise.all([
-      run('getTasks', state.room, state.student.no, state.pin),
-      run('getScore', state.room, state.student.no, state.pin)
-    ]);
-    state.tasks = tasks;
+    const c = JSON.parse(load(homeKey()) || 'null');
+    if (c && c.tasks) { state.tasks = c.tasks; renderTasks(); renderScore(c.score); cachedShown = true; }
+  } catch (e) {}
+  if (cachedShown) $('syncing').classList.remove('hidden'); else loading(true);
+  try {
+    const h = await run('studentHome', state.room, state.student.no, state.pin);
+    state.tasks = h.tasks;
     renderTasks();
-    renderScore(score);
+    renderScore(h.score);
+    store(homeKey(), JSON.stringify({ tasks: h.tasks, score: h.score }));
+    if (!state.annLoaded) { state.annLoaded = true; showAnnouncements(h.anns || []); }   // ประกาศ: ครั้งเดียวต่อการเข้าระบบ
   }
-  catch (e) { loading(false); if (isAuth(e)) return authFail(); banner(e); }
-  loading(false);
-  if (!state.annLoaded) loadAnnouncements();       // โหลดประกาศครั้งเดียวต่อการเข้าระบบ
+  catch (e) { loading(false); $('syncing').classList.add('hidden'); if (isAuth(e)) return authFail(); banner(e); }
+  loading(false); $('syncing').classList.add('hidden');
 }
 
 /* ---------- ประกาศจากครู ---------- */
@@ -372,8 +398,13 @@ const MEGAPHONE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" st
 const linkify = t => esc(t).replace(/https?:\/\/[^\s<]+/g, u => `<a href="${u}" target="_blank" rel="noopener">${u}</a>`);
 async function loadAnnouncements() {
   state.annLoaded = true;
-  try { state.anns = await run('getAnnouncements', state.room, state.student.no, state.pin); }
+  let a;
+  try { a = await run('getAnnouncements', state.room, state.student.no, state.pin); }
   catch (e) { state.anns = []; return; }
+  showAnnouncements(a);
+}
+function showAnnouncements(a) {
+  state.anns = a || [];
   renderAnnBtn();
   state.annQueue = state.anns.filter(a => !a.seen);
   if (state.annQueue.length) showNextAnn();

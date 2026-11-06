@@ -351,6 +351,15 @@
   .toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:11px 18px;border-radius:12px;z-index:40;font-size:14px;max-width:90vw;text-align:center;box-shadow:0 8px 24px -8px rgba(0,0,0,.4)}
   .toast.bad{background:var(--red)}
   #loading{position:fixed;inset:0;background:rgba(238,245,244,.6);display:grid;place-items:center;z-index:30;color:var(--brand);font-weight:500}
+  .ucode{display:flex;gap:16px;align-items:center;justify-content:space-between;flex-wrap:wrap;background:var(--card,#fff);border:1px solid var(--line);border-radius:16px;padding:14px 16px;margin-bottom:12px}
+  .ucode-text{flex:1;min-width:240px}
+  .ucode-text b{display:block;font-size:15px}
+  .ucode-text small{display:block;color:var(--muted);font-size:13px;line-height:1.5;margin-top:2px}
+  .ucode-text small b{display:inline;font-size:inherit;color:var(--amber,#9a6200)}
+  .ucode-form{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .ucode-form input{width:130px;font:inherit;font-size:17px;font-weight:600;letter-spacing:.06em;padding:8px 12px;border:1.5px solid var(--line);border-radius:10px;background:#fff;color:var(--ink)}
+  .ucode-form input::placeholder{letter-spacing:0;font-weight:400;font-size:14px}
+  .ucode-form input:focus{outline:none;border-color:var(--green)}
 </style>
 <link rel="stylesheet" href="../theme.css">
 </head>
@@ -633,6 +642,7 @@ function examSection(room) {
   const ex = A.data.exams.filter(e => !room || appliesTo(e.rooms, room));
   if (!ex.length) return '';
   return `<h2 class="sec">ข้อสอบ <span class="count">${ex.length}</span></h2>
+    ${unlockCodeBox()}
     <div class="tbl"><div class="trow thead"><span>ชุดข้อสอบ</span><span>รูปแบบ</span><span>ทำแล้ว</span><span style="text-align:right">สถานะ</span></div>
     ${ex.map(e => {
       const rooms = room ? [room] : A.data.rooms.map(r => r.room).filter(x => appliesTo(e.rooms, x));
@@ -648,6 +658,33 @@ function examSection(room) {
     }).join('')}</div>
     <p class="muted" style="font-size:13px;margin-top:8px">เพิ่มหรือแก้ข้อสอบได้ในชีท Exams และ ExamQuestions</p>`;
 }
+
+/* ---------- รหัสปลดล็อกที่นักเรียนกรอกเอง ---------- */
+function unlockCodeBox() {
+  const c = A.data.unlockCode || '', lim = A.data.violationLimit || 4;
+  return `<div class="ucode">
+    <div class="ucode-text"><b>รหัสปลดล็อกข้อสอบ</b>
+      <small>นักเรียนถูกเตือน ${lim - 1} ครั้ง ครั้งที่ ${lim} ข้อสอบจะถูกล็อก นักเรียนกรอกรหัสนี้เพื่อปลดล็อกแล้วทำต่อเองได้ · ${c ? 'เปลี่ยนรหัสได้ทุกเมื่อ รหัสเก่าจะใช้ไม่ได้ทันที' : '<b>ตอนนี้ปิดอยู่</b> นักเรียนต้องให้ครูปลดล็อกให้'}</small></div>
+    <form class="ucode-form" onsubmit="event.preventDefault();saveUnlockCode()">
+      <input id="ucode" value="${esc(c)}" maxlength="12" autocomplete="off" spellcheck="false" placeholder="เช่น bio25" aria-label="รหัสปลดล็อกข้อสอบ">
+      <button class="btn sm" type="submit">บันทึก</button>
+      <button class="btn ghost sm" type="button" onclick="randomUnlockCode()">สุ่มรหัส</button>
+      ${c ? '<button class="btn ghost sm" type="button" onclick="clearUnlockCode()">ปิด</button>' : ''}
+    </form>
+  </div>`;
+}
+function randomUnlockCode() { $('ucode').value = String(Math.floor(1000 + Math.random() * 9000)); $('ucode').focus(); }
+async function saveUnlockCode(v) {
+  const code = v != null ? v : $('ucode').value.trim();
+  if (code && !/^[0-9A-Za-z]{3,12}$/.test(code)) return toast('รหัสต้องเป็นตัวเลขหรือตัวอักษรอังกฤษ 3–12 ตัว', true);
+  try {
+    const r = await run('adminSetUnlockCode', A.token, code);
+    A.data.unlockCode = r.code;
+    toast(r.code ? `ตั้งรหัสปลดล็อกเป็น ${r.code} แล้ว` : 'ปิดการปลดล็อกด้วยรหัสแล้ว');
+    render();
+  } catch (e) { toast(errText(e), true); }
+}
+function clearUnlockCode() { saveUnlockCode(''); }
 
 /* ---------- ปลดล็อกข้อสอบ ---------- */
 function lockedSection(room) {

@@ -108,6 +108,14 @@
   .noselect{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
   /* ระหว่างสอบ: ปิดการดึงหน้าลงเพื่อรีเฟรช และการเด้งของหน้าเวลาเลื่อนสุด */
   html.exam-on,html.exam-on body{overscroll-behavior:none}
+  .unlock{margin:16px auto 4px;max-width:360px;text-align:left}
+  .unlock label{display:block;font-weight:600;font-size:15px;margin-bottom:6px}
+  .unlock-row{display:flex;gap:8px}
+  .unlock-row input{flex:1;min-width:0;font:inherit;font-size:18px;letter-spacing:.08em;padding:11px 14px;border:1.5px solid var(--line);border-radius:12px;background:#fff;color:var(--ink)}
+  .unlock-row input:focus{outline:none;border-color:var(--brand)}
+  .unlock-row input::placeholder{letter-spacing:0;font-size:16px}
+  .unlock-row .btn{width:auto;flex:none;padding-left:16px;padding-right:16px;margin:0}
+  .unlock-msg{color:var(--red);font-size:14px;min-height:20px;margin:6px 0 2px}
   html.exam-on{touch-action:pan-x pan-y pinch-zoom}   /* ปิดแตะสองครั้งเพื่อซูม (ยังซูมด้วยสองนิ้วได้) */
   .fsback{position:fixed;left:50%;bottom:calc(16px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:60;
     background:#1a2332;color:#fff;border:0;border-radius:999px;padding:12px 20px;font:inherit;font-size:15px;font-weight:500;
@@ -144,7 +152,7 @@
   </section>
 
   <section id="v-name" class="hidden">
-    <button class="link" onclick="showRooms()">← เปลี่ยนห้อง</button>
+    <button class="link" onclick="backToRooms()">← เปลี่ยนห้อง</button>
     <h2 style="margin-top:6px">เลือกชื่อของตัวเอง <span id="roomLabel" class="muted"></span></h2>
     <input id="search" type="search" placeholder="ค้นหาชื่อหรือเลขที่" oninput="renderStudents()" aria-label="ค้นหาชื่อ">
     <div id="students" class="list"></div>
@@ -179,7 +187,7 @@
         <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3z"/><circle cx="12" cy="13" r="3"/></svg>
           <div><b>ห้ามแคปหน้าจอหรือถ่ายรูปข้อสอบ</b><span>ข้อสอบมีชื่อของเราพิมพ์จาง ๆ อยู่ทุกหน้า</span></div></li>
       </ul>
-      <div class="rule-box"><b>ครั้งที่ 1</b> ระบบจะเตือน · <b>ครั้งที่ 2</b> ข้อสอบจะถูกล็อกและส่งคำตอบที่ทำไว้ทันที</div>
+      <div class="rule-box" id="ruleBox"></div>
       <p class="tip">ก่อนเริ่ม: ปิดแอปอื่น เปิดโหมด "ห้ามรบกวน" และชาร์จแบตให้พอ เพื่อไม่ให้มีสายเข้าหรือการแจ้งเตือนเด้งระหว่างสอบ</p>
       <div class="actions">
         <button class="btn ghost" onclick="loadExams()">ยกเลิก</button>
@@ -193,10 +201,19 @@
       <div class="dialog" style="padding:0;max-width:none">
         <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></div>
         <h3>ข้อสอบถูกล็อก</h3>
-        <p>ตรวจพบการออกจากหน้าข้อสอบครบ 2 ครั้ง ระบบส่งคำตอบที่ทำไว้ให้แล้ว</p>
+        <p id="lkLead">ระบบส่งคำตอบที่ทำไว้ให้แล้ว</p>
         <p id="lkWhy" class="why"></p>
         <p id="lkScore" style="font-size:18px;font-weight:600;color:var(--ink)"></p>
-        <p class="muted">หากคิดว่าเป็นความผิดพลาด ให้ติดต่อครูผู้สอน</p>
+        <form id="lkForm" class="unlock hidden" onsubmit="event.preventDefault();selfUnlock()">
+          <label for="lkCode">รหัสปลดล็อกจากครู</label>
+          <div class="unlock-row">
+            <input id="lkCode" inputmode="text" autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="12" placeholder="กรอกรหัส">
+            <button class="btn" id="lkBtn" type="submit">ปลดล็อกและทำต่อ</button>
+          </div>
+          <p id="lkMsg" class="unlock-msg"></p>
+          <p class="muted" style="font-size:13.5px">ทำต่อจากข้อเดิม คำตอบเดิม และเริ่มนับการเตือนใหม่</p>
+        </form>
+        <p id="lkAsk" class="muted">หากคิดว่าเป็นความผิดพลาด ให้ติดต่อครูผู้สอน</p>
         <button class="btn ghost" style="margin-top:14px" onclick="loadExams()">กลับไปหน้ารายการข้อสอบ</button>
       </div>
     </div>
@@ -237,7 +254,7 @@
     <h3 id="warnTitle">คำเตือน ครั้งที่ 1</h3>
     <p>ระบบตรวจพบ</p>
     <p id="warnWhy" class="why"></p>
-    <p>หากเกิดขึ้นอีก <b>ข้อสอบจะถูกล็อกและส่งคำตอบทันที</b></p>
+    <p id="warnMore"></p>
     <button class="btn" style="margin-top:12px" onclick="resume()">กลับไปทำข้อสอบต่อ</button>
   </div>
 </div>
@@ -271,6 +288,16 @@ async function run(action, ...args) {
 
 /* ---------- เข้าสู่ระบบ (ใช้ข้อมูลเดียวกับระบบส่งงาน) ---------- */
 async function init() {
+  // เคยเข้าระบบในเครื่องนี้แล้ว → ข้ามการโหลดรายชื่อห้อง/นักเรียน เข้าได้ทันที
+  const r0 = load('room'), n0 = load('no'), p0 = load('pin'), nm = load('name');
+  if (r0 && n0 && p0 && nm) {
+    S.room = r0; S.student = { no: n0, name: nm }; S.pin = p0;
+    $('roomLabel').textContent = roomName(r0);
+    const act = load('activeExam');
+    setWho();
+    if (act) return openExam(act, true);         // รีเฟรชระหว่างสอบ → กลับเข้าข้อสอบทันที
+    return loadExams();
+  }
   loading(true);
   try {
     S.rooms = await run('getRooms');
@@ -279,6 +306,10 @@ async function init() {
     else showRooms();
   } catch (e) { banner(e); }
   loading(false);
+}
+async function backToRooms() {
+  if (!S.rooms.length) { loading(true); try { S.rooms = await run('getRooms'); } catch (e) { banner(e); } loading(false); }
+  showRooms();
 }
 function showRooms() {
   banner(null); $('who').innerHTML = '';
@@ -328,26 +359,36 @@ async function doLogin() {
   loading(true);
   try {
     await run('login', S.room, S.student.no, p1);
-    S.pin = p1; store('no', S.student.no); store('pin', p1);
+    S.pin = p1; store('no', S.student.no); store('pin', p1); store('name', S.student.name);
     loading(false); await enter();
   } catch (e) { loading(false); $('pinMsg').textContent = errText(e); }
 }
-async function enter() {
+function setWho() {
   $('who').innerHTML = `<span>${esc(S.student.name)} · ${esc(roomName(S.room))} เลขที่ ${esc(S.student.no)}</span>
     <button class="link light" onclick="logout()">ออกจากระบบ</button>`;
+}
+async function enter() {
+  store('name', S.student.name);
+  setWho();
   await loadExams();
 }
-function logout() {
+async function logout() {
   if (S.ex && !confirmLeave()) return;
-  S.ex = null;
-  store('no', null); store('pin', null); S.student = null; S.pin = null;
-  $('who').innerHTML = ''; $('search').value = ''; renderStudents(); show('v-name');
+  S.ex = null; store('activeExam', null);
+  store('no', null); store('pin', null); store('name', null); S.student = null; S.pin = null;
+  $('who').innerHTML = ''; $('search').value = '';
+  if (!S.students.length) {                       // เข้ามาทางลัด ยังไม่มีรายชื่อ → โหลดก่อน
+    loading(true);
+    try { S.students = await run('getStudents', S.room); } catch (e) { banner(e); }
+    loading(false);
+  }
+  renderStudents(); show('v-name');
 }
-function authFail() { store('pin', null); S.pin = null; S.ex = null; showPin(); }
+function authFail() { store('pin', null); store('activeExam', null); S.pin = null; S.ex = null; showPin(); }
 
 /* ---------- รายการข้อสอบ ---------- */
 async function loadExams() {
-  S.ex = null; Guard.stop(); loading(true); banner(null);
+  S.ex = null; Guard.stop(); store('activeExam', null); loading(true); banner(null);
   try { S.exams = await run('getExams', S.room, S.student.no, S.pin); renderExams(); show('v-list'); }
   catch (e) { loading(false); if (isAuth(e)) return authFail(); banner(e); }
   loading(false);
@@ -357,7 +398,8 @@ function renderExams() {
     const left = e.attempts - e.used;
     let btn;
     if (e.inProgress) btn = `<button class="btn" onclick="start('${esc(e.id)}')">ทำต่อ</button>`;
-    else if (e.locked) btn = `<button class="btn" disabled>ถูกล็อก · ติดต่อครู</button>`;
+    else if (e.locked) btn = e.selfUnlock ? `<button class="btn" onclick="showLocked('${esc(e.id)}')">กรอกรหัสปลดล็อก</button>`
+                                          : `<button class="btn" disabled>ถูกล็อก · ติดต่อครู</button>`;
     else if (!e.count) btn = `<button class="btn" disabled>ยังไม่มีข้อสอบ</button>`;
     else if (left <= 0) btn = `<button class="btn" disabled>ทำครบ ${e.attempts} ครั้งแล้ว</button>`;
     else btn = `<button class="btn${e.done ? ' ghost' : ''}" onclick="start('${esc(e.id)}')">${e.done ? `ทำอีกครั้ง (เหลือ ${left} ครั้ง)` : 'เริ่มทำข้อสอบ'}</button>`;
@@ -380,19 +422,67 @@ const draftKey = () => `exam:${S.room}:${S.student.no}:${S.ex.id}:${S.ex.attempt
 function start(id) {
   const e = S.exams.find(x => x.id === id);
   S.pendingId = id;
-  if (e && e.proctor) { $('ruTitle').textContent = e.title; show('v-rules'); return; }
+  if (e && e.proctor) {
+    const lim = e.limit || 4;
+    $('ruTitle').textContent = e.title;
+    $('ruleBox').innerHTML = `<b>ครั้งที่ 1${lim > 2 ? '–' + (lim - 1) : ''}</b> ระบบจะเตือน · <b>ครั้งที่ ${lim}</b> ข้อสอบจะถูกล็อกและส่งคำตอบที่ทำไว้ทันที`;
+    show('v-rules'); return;
+  }
   openExam(id);
 }
 function begin() { Guard.enterFullscreen(); openExam(S.pendingId); }   // ต้องขอเต็มจอทันทีตอนกดปุ่ม
-async function openExam(id) {
+async function openExam(id, fromReload) {
   loading(true); banner(null);
+  if (fromReload) $('loading').textContent = 'กำลังกลับเข้าข้อสอบ…';
   try {
-    S.ex = await run('startExam', S.room, S.student.no, S.pin, id);
+    const r = await run('startExam', S.room, S.student.no, S.pin, id);
+    if (r.locked) {                                  // ปิดหน้าไปนานเกินไปจนครบจำนวนครั้ง
+      store('activeExam', null); loading(false); $('loading').textContent = 'กำลังโหลด…';
+      S.ex = { id: r.id }; return Guard.lockOut(r.why, r.result, r.selfUnlock);
+    }
+    S.ex = r;
+    store('activeExam', id);
     S.ans = Object.assign({}, S.ex.answers || {}, JSON.parse(load(draftKey()) || '{}'));
     renderExam(); show('v-exam');
-    if (S.ex.proctor) Guard.start(S.ex.violations || 0, S.ex.limit || 2); else Guard.stop();
-  } catch (e) { loading(false); Guard.stop(); if (isAuth(e)) return authFail(); banner(e); S.ex = null; show('v-list'); }
-  loading(false);
+    if (S.ex.proctor) Guard.start(S.ex.violations || 0, S.ex.limit || 4); else Guard.stop();
+  } catch (e) {
+    loading(false); Guard.stop(); store('activeExam', null); $('loading').textContent = 'กำลังโหลด…';
+    if (isAuth(e)) return authFail();
+    S.ex = null;
+    if (fromReload) { await loadExams(); return banner(e); }
+    banner(e); show('v-list');
+  }
+  loading(false); $('loading').textContent = 'กำลังโหลด…';
+}
+
+/* ---------- ปลดล็อกด้วยรหัสจากครู ---------- */
+function showLocked(id) {
+  S.lockedId = id;
+  const e = S.exams.find(x => x.id === id);
+  $('lkLead').textContent = 'ข้อสอบชุดนี้ถูกล็อกเพราะตรวจพบการออกจากหน้าข้อสอบ' + (e ? ` (${e.title})` : '');
+  $('lkWhy').textContent = ''; $('lkScore').textContent = '';
+  toggleUnlock(true);
+  show('v-locked');
+}
+function toggleUnlock(on) {
+  $('lkForm').classList.toggle('hidden', !on);
+  $('lkAsk').textContent = on ? 'ขอรหัสจากครูผู้สอน' : 'หากคิดว่าเป็นความผิดพลาด ให้ติดต่อครูผู้สอน';
+  $('lkCode').value = ''; $('lkMsg').textContent = '';
+}
+async function selfUnlock() {
+  const code = $('lkCode').value.trim();
+  if (!code) return ($('lkMsg').textContent = 'กรอกรหัสที่ได้จากครู');
+  Guard.enterFullscreen();                       // ต้องขอเต็มจอตอนกดปุ่ม
+  $('lkBtn').disabled = true; $('lkMsg').textContent = ''; loading(true);
+  try {
+    await run('studentUnlockExam', S.room, S.student.no, S.pin, S.lockedId, code);
+    loading(false);
+    await openExam(S.lockedId);
+  } catch (e) {
+    loading(false); Guard.exitFullscreen();
+    if (isAuth(e)) return authFail();
+    $('lkMsg').textContent = errText(e);
+  } finally { $('lkBtn').disabled = false; }
 }
 function renderExam() {
   $('exTitle').textContent = S.ex.title + (S.ex.attempts > 1 ? ` · ครั้งที่ ${S.ex.attempt}` : '');
@@ -436,7 +526,7 @@ async function sendExam() {
   Guard.pause();
   try {
     const r = await run('submitExam', S.room, S.student.no, S.pin, S.ex.id, S.ans);
-    store(draftKey(), null);
+    store(draftKey(), null); store('activeExam', null);
     S.ex = null; Guard.stop();
     const pct = r.full ? r.score / r.full * 100 : 0;
     $('ring').style.background = `conic-gradient(var(--brand) ${pct}%, #e4ebe7 0)`;
@@ -461,7 +551,7 @@ window.addEventListener('beforeunload', e => { if (S.ex && (Guard.on || Object.k
  *  ครั้งแรกเตือน ครั้งที่ 2 เซิร์ฟเวอร์ล็อกและส่งคำตอบ (เก็บนับในชีท รีเฟรชก็ไม่รีเซ็ต)
  * ===================================================================== */
 const Guard = {
-  on: false, paused: false, count: 0, limit: 2, last: 0, base: null, fsWanted: false, busy: false,
+  on: false, paused: false, count: 0, limit: 4, last: 0, base: null, fsWanted: false, busy: false,
   // "เหตุการณ์" = การออกจากหน้าข้อสอบ 1 ครั้ง ไม่ว่าจะยิงสัญญาณกี่ตัว นับเป็น 1 เสมอ
   incident: false, awaySince: 0, awayHidden: false, presentSince: 0, minorSent: 0, minorLast: 0,
   AWAY_MS: 1500,        // หลุดโฟกัสนานกว่านี้ = นับ   (สั้นกว่า = บันทึกเป็นเหตุการณ์เล็กน้อย ไม่นับ)
@@ -474,7 +564,7 @@ const Guard = {
     const d = document.documentElement;
     try { const p = (d.requestFullscreen || d.webkitRequestFullscreen).call(d, { navigationUI: 'hide' }); if (p && p.catch) p.catch(() => {}); } catch (e) {}
   },
-  exitFullscreen() { try { (document.exitFullscreen || document.webkitExitFullscreen).call(document); } catch (e) {} },
+  exitFullscreen() { if (!this.fsEl()) return; try { const p = (document.exitFullscreen || document.webkitExitFullscreen).call(document); if (p && p.catch) p.catch(() => {}); } catch (e) {} },
 
   start(count, limit) {
     Object.assign(this, { on: true, paused: false, count: count, limit: limit, last: 0, incident: false,
@@ -486,6 +576,7 @@ const Guard = {
     this.watermark(true);
     this.incident = true;                         // ช่วงเข้าเต็มจอตอนเริ่ม ยังไม่นับ
     setTimeout(() => this.baseline(), 900);
+    setTimeout(() => { if (this.on && this.fsWanted && !this.fsEl()) this.fsPrompt(true); }, 1200);
     this.pill();
   },
   stop() {
@@ -519,7 +610,7 @@ const Guard = {
   pill() {
     $('guard').classList.remove('hidden');
     $('guard').classList.toggle('warned', this.count > 0);
-    $('guardText').textContent = this.count > 0 ? `ถูกเตือนแล้ว ${this.count} ครั้ง · อีกครั้งจะถูกล็อก` : 'ระบบป้องกันทุจริตเปิดอยู่';
+    $('guardText').textContent = this.count > 0 ? this.leftText(this.count) : 'ระบบป้องกันทุจริตเปิดอยู่';
   },
   watermark(show) {
     const w = $('watermark');
@@ -546,15 +637,23 @@ const Guard = {
     catch (e) { r = { count: predicted, locked: predicted >= this.limit, offline: true }; }
     this.busy = false; loading(false); $('loading').textContent = 'กำลังโหลด…';
     this.count = r.count || predicted;
-    if (r.locked) return this.lockOut(type, r.result);
+    if (r.locked) return this.lockOut(type, r.result, r.selfUnlock);
     this.showWarn(this.count, type);                                            // ยืนยันตัวเลขจากเซิร์ฟเวอร์
+  },
+  leftText(n) {
+    const left = this.limit - 1 - n;
+    return left > 0 ? `ถูกเตือนแล้ว ${n} ครั้ง · เหลืออีก ${left} ครั้งก่อนล็อก` : `ถูกเตือนแล้ว ${n} ครั้ง · อีกครั้งจะถูกล็อก`;
   },
   showWarn(n, type) {
     this.count = Math.max(this.count, n - 1);
-    $('warnTitle').textContent = `คำเตือน ครั้งที่ ${n}`;
+    const left = this.limit - 1 - n;
+    $('warnTitle').textContent = `คำเตือน ครั้งที่ ${n} จาก ${this.limit - 1}`;
     $('warnWhy').textContent = type;
+    $('warnMore').innerHTML = left > 0
+      ? `เตือนได้อีก <b>${left} ครั้ง</b> ถ้าเกิดขึ้นครบ ${this.limit} ครั้ง <b>ข้อสอบจะถูกล็อกและส่งคำตอบทันที</b>`
+      : `นี่คือคำเตือนครั้งสุดท้าย ถ้าเกิดขึ้นอีก <b>ข้อสอบจะถูกล็อกและส่งคำตอบทันที</b>`;
     $('warn').classList.remove('hidden');
-    $('guardText').textContent = `ถูกเตือนแล้ว ${n} ครั้ง · อีกครั้งจะถูกล็อก`;
+    $('guardText').textContent = this.leftText(n);
     $('guard').classList.add('warned');
   },
   /* เหตุการณ์เล็กน้อย: ไม่นับ แต่บันทึกให้ครูดู (จำกัดความถี่) */
@@ -565,9 +664,13 @@ const Guard = {
     this.minorSent++; this.minorLast = now;
     run('logExamEvent', S.room, S.student.no, S.pin, S.ex.id, detail).catch(() => {});
   },
-  lockOut(type, res) {
-    store(draftKey(), null);
+  lockOut(type, res, self) {
+    if (S.ex && S.ex.attempt) store(draftKey(), null);
+    S.lockedId = S.ex && S.ex.id;
+    store('activeExam', null);
     S.ex = null; this.stop();
+    $('lkLead').textContent = `ตรวจพบการออกจากหน้าข้อสอบครบ ${this.limit} ครั้ง ระบบส่งคำตอบที่ทำไว้ให้แล้ว`;
+    toggleUnlock(!!self);
     $('lkWhy').textContent = type;
     $('lkScore').textContent = res ? `ตอบถูก ${res.correct} จาก ${res.total} ข้อ · ได้ ${res.score} / ${res.full} คะแนน` : '';
     show('v-locked');
@@ -654,8 +757,9 @@ const Guard = {
     // ปิด/รีเฟรชหน้าระหว่างสอบ: ส่งรายงานแบบ beacon (ทำงานแม้หน้าถูกปิด)
     window.addEventListener('pagehide', () => {
       if (!this.on || !S.ex || this.paused) return;
-      try { navigator.sendBeacon(API_URL, JSON.stringify({ action: 'reportViolation',
-        args: [S.room, S.student.no, S.pin, S.ex.id, 'ปิดหรือรีเฟรชหน้าข้อสอบ', S.ans] })); } catch (e) {}
+      // ยังไม่นับทันที: ถ้ากลับมาทำต่อภายใน 20 วินาที (เช่น เผลอรีเฟรช) จะไม่นับ
+      try { navigator.sendBeacon(API_URL, JSON.stringify({ action: 'reportClose',
+        args: [S.room, S.student.no, S.pin, S.ex.id] })); } catch (e) {}
     });
   }
 };
