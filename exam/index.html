@@ -286,6 +286,19 @@ async function run(action, ...args) {
   return out.data;
 }
 
+/** เรียกซ้ำอัตโนมัติเมื่อเซิร์ฟเวอร์ยุ่ง/เน็ตสะดุด (คำตอบยังอยู่ครบ ส่งซ้ำได้ปลอดภัย) */
+const BUSY = /ล็อก|lock|timed out|หมดเวลา|ยุ่ง|busy|Service invoked too many|เชื่อมต่อเซิร์ฟเวอร์ไม่ได้|ผิดรูปแบบ/i;
+async function runRetry(action, args, onRetry, tries = 5) {
+  for (let i = 1; ; i++) {
+    try { return await run(action, ...args); }
+    catch (e) {
+      if (i >= tries || isAuth(e) || !BUSY.test(String(e && e.message))) throw e;
+      onRetry && onRetry(i);
+      await new Promise(r => setTimeout(r, 1500 * i + Math.random() * 1500));
+    }
+  }
+}
+
 /* ---------- เข้าสู่ระบบ (ใช้ข้อมูลเดียวกับระบบส่งงาน) ---------- */
 async function init() {
   // เคยเข้าระบบในเครื่องนี้แล้ว → ข้ามการโหลดรายชื่อห้อง/นักเรียน เข้าได้ทันที
@@ -435,7 +448,8 @@ async function openExam(id, fromReload) {
   loading(true); banner(null);
   if (fromReload) $('loading').textContent = 'กำลังกลับเข้าข้อสอบ…';
   try {
-    const r = await run('startExam', S.room, S.student.no, S.pin, id);
+    const r = await runRetry('startExam', [S.room, S.student.no, S.pin, id],
+      n => { $('loading').textContent = `คนเข้าพร้อมกันเยอะ กำลังลองอีกครั้ง (${n})…`; });
     if (r.locked) {                                  // ปิดหน้าไปนานเกินไปจนครบจำนวนครั้ง
       store('activeExam', null); loading(false); $('loading').textContent = 'กำลังโหลด…';
       S.ex = { id: r.id }; return Guard.lockOut(r.why, r.result, r.selfUnlock);
@@ -525,7 +539,8 @@ async function sendExam() {
   S.sending = true; $('sendBtn').disabled = true; loading(true);
   Guard.pause();
   try {
-    const r = await run('submitExam', S.room, S.student.no, S.pin, S.ex.id, S.ans);
+    const r = await runRetry('submitExam', [S.room, S.student.no, S.pin, S.ex.id, S.ans],
+      n => { $('loading').textContent = `คนส่งพร้อมกันเยอะ กำลังส่งอีกครั้ง (${n})…`; });
     store(draftKey(), null); store('activeExam', null);
     S.ex = null; Guard.stop();
     const pct = r.full ? r.score / r.full * 100 : 0;
@@ -539,7 +554,7 @@ async function sendExam() {
   } catch (e) {
     if (isAuth(e)) { loading(false); Guard.stop(); return authFail(); }
     Guard.resumeWatch(); banner(e); window.scrollTo(0, 0);
-  } finally { S.sending = false; $('sendBtn').disabled = false; loading(false); }
+  } finally { S.sending = false; $('sendBtn').disabled = false; loading(false); $('loading').textContent = 'กำลังโหลด…'; }
 }
 function confirmLeave() { return !S.ex || confirm('ยังไม่ได้ส่งข้อสอบ ออกจากหน้านี้ไหม? (คำตอบที่เลือกไว้ยังเก็บอยู่ในเครื่อง)'); }
 window.addEventListener('beforeunload', e => { if (S.ex && (Guard.on || Object.keys(S.ans).length)) { e.preventDefault(); e.returnValue = ''; } });
