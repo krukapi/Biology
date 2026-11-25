@@ -157,6 +157,34 @@
   .q textarea:focus{outline:2px solid var(--brand);border-color:transparent}
   .type{font-size:12px;font-weight:700;background:var(--brand-soft);color:var(--brand-dark);padding:1px 8px;border-radius:999px;margin-right:6px}
   .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:12px 18px;border-radius:12px;font-size:15px;z-index:30;max-width:90vw;text-align:center}
+  .sample-btn{display:flex;align-items:center;gap:12px;width:100%;margin:12px 0 0;padding:12px 14px;border:1px solid #cfe3e3;border-radius:14px;background:#f2f8f8;color:var(--ink);font:inherit;text-align:left;cursor:pointer;transition:background-color .15s}
+  .sample-btn:hover{background:#e6f2f2}
+  .sample-btn svg{flex:none;width:22px;height:22px;color:var(--brand)}
+  .sample-btn b{display:block;font-size:15px;font-weight:600;color:var(--brand)}
+  .sample-btn small{display:block;font-size:13px;color:var(--muted);margin-top:1px}
+  .sample-wait{margin:10px 0 0;font-size:13px;color:var(--muted)}
+  .samp{position:fixed;inset:0;z-index:30;background:rgba(16,24,36,.55);display:flex;align-items:flex-end;justify-content:center}
+  .samp.hidden,.szoom.hidden{display:none}
+  .samp-card{background:var(--bg,#eef5f4);width:100%;max-width:720px;max-height:92vh;border-radius:20px 20px 0 0;display:flex;flex-direction:column;overflow:hidden}
+  @media(min-width:640px){.samp{align-items:center;padding:24px}.samp-card{border-radius:20px}}
+  .samp-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;padding:18px 18px 6px;background:#fff}
+  .samp-head small{display:block;font-size:13px;color:var(--muted)}
+  .samp-head h2{font-size:19px;font-weight:600;line-height:1.35}
+  .samp-x{flex:none;width:44px;height:44px;border:0;border-radius:12px;background:#eef3f3;color:var(--ink);cursor:pointer;display:grid;place-items:center}
+  .samp-x svg{width:20px;height:20px}
+  .samp-note{background:#fff;padding:0 18px 14px;font-size:13.5px;color:var(--muted);border-bottom:1px solid var(--line);margin:0}
+  .samp-body{overflow:auto;padding:14px 14px 24px;display:grid;gap:12px;overscroll-behavior:contain}
+  .s-load{padding:40px 16px;text-align:center;color:var(--muted)}
+  .s-item{background:#fff;border:1px solid var(--line);border-radius:16px;padding:14px}
+  .s-item h3{font-size:15px;font-weight:600;margin-bottom:10px}
+  .s-imgs{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+  .s-img{aspect-ratio:3/4;border:1px solid var(--line);border-radius:10px;background:#f3f7f7;padding:0;overflow:hidden;cursor:zoom-in;display:grid;place-items:center;color:var(--muted);font:inherit;font-size:13px}
+  .s-img img{width:100%;height:100%;object-fit:cover;display:block}
+  .s-qa + .s-qa{margin-top:10px;padding-top:10px;border-top:1px solid var(--line)}
+  .s-q{font-size:14px;color:var(--muted);margin:0}
+  .s-a{font-size:15px;margin:4px 0 0;white-space:pre-wrap}
+  .szoom{position:fixed;inset:0;z-index:40;background:rgba(10,16,26,.92);display:flex;align-items:center;justify-content:center;padding:12px;cursor:zoom-out}
+  .szoom img{max-width:100%;max-height:100%;object-fit:contain;border-radius:6px}
   .syncing{position:fixed;top:12px;left:50%;transform:translateX(-50%);z-index:40;background:#1a2332;color:#a8dadc;font-size:13px;padding:6px 14px;border-radius:999px;box-shadow:0 6px 18px -8px rgba(16,24,36,.5)}
   .syncing.hidden{display:none}
 </style>
@@ -238,6 +266,17 @@
   </div>
 </div>
 
+<div id="samp" class="samp hidden" role="dialog" aria-modal="true" aria-labelledby="sTitle" onclick="if(event.target===this)closeSamples()">
+  <div class="samp-card">
+    <div class="samp-head">
+      <div><small>ตัวอย่างงานของเพื่อนในห้อง</small><h2 id="sTitle"></h2></div>
+      <button type="button" id="sClose" class="samp-x" onclick="closeSamples()" aria-label="ปิด"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    </div>
+    <p class="samp-note">งานที่ครูตรวจผ่านแล้ว ไม่แสดงชื่อเจ้าของงาน ใช้ดูเป็นแนวทาง แล้วทำงานของตัวเอง ห้ามคัดลอก</p>
+    <div id="sBody" class="samp-body"></div>
+  </div>
+</div>
+<div id="sZoom" class="szoom hidden" onclick="this.classList.add('hidden')" role="dialog" aria-label="รูปขยาย"><img id="sZoomImg" alt=""></div>
 <div id="ann" class="ann hidden" role="dialog" aria-modal="true" aria-labelledby="annTitle"><div class="ann-card" id="annCard"></div></div>
 <div id="loading">กำลังโหลด…</div>
 
@@ -549,10 +588,84 @@ function card(t) {
     ${t.desc ? `<p class="desc">${esc(t.desc)}</p>` : ''}
     <p class="due">${t.dueText ? 'กำหนดส่ง ' + esc(t.dueText) : 'ไม่มีกำหนดส่ง'}</p>
     ${review}
+    ${sampleRow(t)}
     ${t.submitted ? `<div class="sent">ส่งล่าสุด ${esc(t.submittedAt)}${t.count > 1 ? ` (ส่ง ${t.count} ครั้ง)` : ''}${late}${files ? `<ul>${files}</ul>` : ''}</div>` : ''}
     <button class="btn ${t.submitted && !fail ? 'ghost' : ''}" onclick="openUpload('${esc(t.id)}')">${btnText}</button>
   </article>`;
 }
+
+/* ---------- ตัวอย่างงานจากเพื่อน (เปิดเมื่อครูตรวจเกินครึ่งห้อง) ---------- */
+const EYE_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>';
+function sampleRow(t) {
+  const sm = t.sample || {};
+  if (t.review === 'pass') return '';
+  if (sm.ready) return `<button type="button" class="sample-btn" onclick="openSamples('${esc(t.id)}')">${EYE_ICON}
+      <span><b>ดูตัวอย่างงานของเพื่อน</b><small>งานที่ครูตรวจผ่านแล้ว ใช้เป็นแนวทาง</small></span></button>`;
+  if (sm.pct > 0) return `<p class="sample-wait">ตัวอย่างงานของเพื่อนจะเปิดให้ดูเมื่อครูตรวจเกินครึ่งห้อง (ตอนนี้ ${sm.pct}%)</p>`;
+  return '';
+}
+const SAMP_IMG = {};
+let SAMP_N = 0; const SAMP_Q = [];
+function sampImg(taskId, id) {
+  if (!SAMP_IMG[id]) SAMP_IMG[id] = new Promise((res, rej) => { SAMP_Q.push({ taskId, id, res, rej }); pumpSamp(); })
+    .catch(e => { delete SAMP_IMG[id]; throw e; });
+  return SAMP_IMG[id];
+}
+function pumpSamp() {
+  while (SAMP_N < 3 && SAMP_Q.length) {
+    const j = SAMP_Q.shift(); SAMP_N++;
+    run('studentSampleFile', state.room, state.student.no, state.pin, j.taskId, j.id)
+      .then(r => j.res(r.image ? `data:${r.mime};base64,${r.data}` : null), j.rej)
+      .finally(() => { SAMP_N--; pumpSamp(); });
+  }
+}
+async function openSamples(id) {
+  state.sampTask = id;
+  const t = state.tasks.find(x => x.id === id);
+  $('sTitle').textContent = t ? t.title : 'ตัวอย่างงาน';
+  $('sBody').innerHTML = '<div class="s-load">กำลังโหลดตัวอย่าง…</div>';
+  $('samp').classList.remove('hidden');
+  document.body.style.overflow = 'hidden';
+  $('sClose').focus();
+  try {
+    const d = await run('getSamples', state.room, state.student.no, state.pin, id);
+    if (!d.samples.length) { $('sBody').innerHTML = '<div class="s-load">ยังไม่มีตัวอย่างที่แสดงได้ (งานที่ผ่านอาจเป็นไฟล์ PDF หรือข้อปรนัย)</div>'; return; }
+    $('sBody').innerHTML = d.samples.map((x, i) => `<section class="s-item">
+        <h3>${esc(x.label)}</h3>
+        ${x.files ? `<div class="s-imgs">${x.files.map(f => `<button type="button" class="s-img" data-id="${esc(f)}" onclick="sampZoom(this)" aria-label="ขยายรูป ${esc(x.label)}"><span>กำลังโหลดรูป…</span></button>`).join('')}</div>` : ''}
+        ${x.answers ? x.answers.map(q => `<div class="s-qa"><p class="s-q">${esc(q.q)}</p><p class="s-a">${esc(q.a)}</p></div>`).join('') : ''}
+      </section>`).join('');
+    const io = new IntersectionObserver(es => es.forEach(en => {
+      if (!en.isIntersecting) return;
+      io.unobserve(en.target);
+      const b = en.target;
+      sampImg(id, b.dataset.id).then(src => { b.innerHTML = src ? `<img src="${src}" alt="" decoding="async">` : '<span>เปิดไฟล์นี้ไม่ได้</span>'; })
+        .catch(() => { b.innerHTML = '<span>โหลดรูปไม่สำเร็จ แตะเพื่อลองใหม่</span>'; b.dataset.retry = '1'; });
+    }), { root: $('sBody'), rootMargin: '800px 0px' });
+    $('sBody').querySelectorAll('.s-img').forEach(b => io.observe(b));
+  } catch (e) {
+    if (isAuth(e)) { closeSamples(); return authFail(); }
+    $('sBody').innerHTML = `<div class="s-load">${esc(errText(e))}</div>`;
+  }
+}
+function sampZoom(b) {
+  const img = b.querySelector('img');
+  if (!img) {
+    if (b.dataset.retry) { b.dataset.retry = ''; b.innerHTML = '<span>กำลังโหลดรูป…</span>';
+      sampImg(state.sampTask, b.dataset.id).then(src => { b.innerHTML = src ? `<img src="${src}" alt="" decoding="async">` : '<span>เปิดไฟล์นี้ไม่ได้</span>'; }).catch(() => { b.innerHTML = '<span>โหลดรูปไม่สำเร็จ แตะเพื่อลองใหม่</span>'; b.dataset.retry = '1'; }); }
+    return;
+  }
+  $('sZoomImg').src = img.src; $('sZoom').classList.remove('hidden');
+}
+function closeSamples() {
+  $('samp').classList.add('hidden'); $('sZoom').classList.add('hidden');
+  document.body.style.overflow = '';
+}
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Escape') return;
+  if (!$('sZoom').classList.contains('hidden')) return $('sZoom').classList.add('hidden');
+  if (!$('samp').classList.contains('hidden')) closeSamples();
+});
 
 /* ---------- อัปโหลด ---------- */
 function openUpload(id) {
