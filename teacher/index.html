@@ -6,6 +6,9 @@
 <meta name="theme-color" content="#1a2332">
 <meta name="robots" content="noindex">
 <title>หน้าจัดการของครู</title>
+<link rel="preconnect" href="https://script.google.com">
+<link rel="preconnect" href="https://drive.google.com">
+<link rel="preconnect" href="https://script.googleusercontent.com" crossorigin>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -350,6 +353,9 @@
 
   .toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:11px 18px;border-radius:12px;z-index:40;font-size:14px;max-width:90vw;text-align:center;box-shadow:0 8px 24px -8px rgba(0,0,0,.4)}
   .toast.bad{background:var(--red)}
+  .savestate{position:fixed;right:16px;top:14px;z-index:45;background:#fff;color:var(--green);border:1px solid var(--line);font-size:13px;font-weight:500;padding:6px 12px;border-radius:999px;box-shadow:0 6px 18px -10px rgba(16,24,36,.4)}
+  .savestate.busy{color:var(--muted)}
+  .savestate.hidden{display:none}
   #loading{position:fixed;inset:0;background:rgba(238,245,244,.6);display:grid;place-items:center;z-index:30;color:var(--brand);font-weight:500}
   .ucode{display:flex;gap:16px;align-items:center;justify-content:space-between;flex-wrap:wrap;background:var(--card,#fff);border:1px solid var(--line);border-radius:16px;padding:14px 16px;margin-bottom:12px}
   .ucode-text{flex:1;min-width:240px}
@@ -466,6 +472,7 @@
   </div>
 </div>
 <div id="loading" class="hidden">กำลังโหลด…</div>
+<div id="saveState" class="savestate hidden" role="status" aria-live="polite"></div>
 
 <script src="../config.js"></script>
 <script>
@@ -852,7 +859,7 @@ function renderBatch() {
   // โหลดรูปเฉพาะการ์ดที่เลื่อนมาใกล้จอ
   if (BV_OBS) BV_OBS.disconnect();
   BV_OBS = new IntersectionObserver(ents => ents.forEach(en => { if (en.isIntersecting) { BV_OBS.unobserve(en.target); bvLoadMedia(en.target.dataset.no); } }),
-    { root: $('bv'), rootMargin: '600px 0px' });
+    { root: $('bv'), rootMargin: '1400px 0px' });
   document.querySelectorAll('.bc-media[data-no]').forEach(el => BV_OBS.observe(el));
 }
 function bcInner(s) {
@@ -915,21 +922,26 @@ async function bvSave() {
   if (noNote && !confirm(`มี ${noNote} คนที่ "ไม่ผ่าน" แต่ยังไม่ได้เขียนหมายเหตุ บันทึกเลยไหม?`)) return;
   const items = nos.map(no => { const s = g.data.students.find(x => x.no === no), e = g.edits[no];
     return { row: s.sub.row, no, result: e.review, score: e.review === 'pass' ? e.score : '', note: e.note }; });
-  $('bvSave').disabled = true; loading(true);
+  // ไม่ล็อกหน้าจอ: ตรวจคนต่อไปได้ระหว่างบันทึก
+  const sent = {}; nos.forEach(no => { sent[no] = g.edits[no]; });
+  $('bvSave').disabled = true; $('bvSave').textContent = `กำลังบันทึก ${nos.length} คน…`;
+  savePending(1);
   try {
     const r = await run('adminGradeBatch', A.token, g.taskId, g.room, items);
-    r.saved.forEach(x => { const s = g.data.students.find(y => y.no === x.no); Object.assign(s.sub, { review: x.review, score: x.score, note: x.note }); delete g.edits[x.no]; });
-    loading(false);
-    const top = $('bv').scrollTop;
-    renderGrade(); renderBatch(); $('bv').scrollTop = Math.min(top, $('bv').scrollHeight);
+    r.saved.forEach(x => {
+      const s = g.data.students.find(y => y.no === x.no); Object.assign(s.sub, { review: x.review, score: x.score, note: x.note });
+      if (g.edits[x.no] === sent[x.no]) delete g.edits[x.no];          // ถ้าแก้ต่อระหว่างบันทึก เก็บค่าใหม่ไว้
+    });
+    if (A.g === g) { const top = $('bv').scrollTop; renderGrade(); renderBatch(); $('bv').scrollTop = Math.min(top, $('bv').scrollHeight); }
     if (r.errors.length) toast(`บันทึก ${r.saved.length} คน · ไม่สำเร็จ ${r.errors.length}: ${r.errors.map(e => (e.no ? 'เลขที่ ' + e.no + ' ' : '') + e.error).join(' / ')}`, true);
     else toast(`บันทึกผลตรวจ ${r.saved.length} คนเรียบร้อย`);
-  } catch (e) { loading(false); toast(errText(e), true); if ($('bvSave')) $('bvSave').disabled = false; }
+  } catch (e) { toast(errText(e), true); if (A.g === g) renderBvBar(); }
+  finally { savePending(-1); }
 }
 function bvLoadMedia(no) {
   const el = document.querySelector(`.bc-media[data-no="${CSS.escape(no)}"]`); if (!el) return;
   el.querySelectorAll('.bimg[data-id]').forEach(b => loadImg(b.dataset.id)
-    .then(r => { b.innerHTML = r.src ? `<img src="${r.src}" alt="">` : 'เปิดใน Drive'; if (!r.src) b.onclick = () => window.open(r.url, '_blank'); })
+    .then(r => { b.innerHTML = r.src ? `<img src="${r.src}" alt="" decoding="async">` : 'เปิดใน Drive'; if (!r.src) b.onclick = () => window.open(r.url, '_blank'); })
     .catch(() => { b.textContent = 'โหลดรูปไม่ได้'; }));
 }
 function openLbFor(no, k) { A.g.cur = no; openLb(k); }
@@ -1003,30 +1015,91 @@ async function gSave(next) {
   const g = A.g, f = g.form, s = g.data.students.find(x => x.no === g.cur);
   if (!f || !s || !s.sub) return;
   if (f.review === 'fail' && !String(f.note).trim() && !confirm('ยังไม่ได้เขียนหมายเหตุว่าต้องแก้อะไร บันทึกเลยไหม?')) return;
-  $('gSave1').disabled = $('gSave2').disabled = true;
+  // บันทึกแบบไม่ต้องรอ: เปลี่ยนผลบนจอทันที แล้วส่งไปเซิร์ฟเวอร์เบื้องหลัง (ถ้าไม่สำเร็จจะคืนค่าเดิมและแจ้ง)
   const before = gList().map(x => x.no), idx = before.indexOf(s.no);
+  const prev = { review: s.sub.review, score: s.sub.score, note: s.sub.note };
+  const want = { review: f.review, score: f.review === 'pass' ? f.score : '', note: f.note };
+  Object.assign(s.sub, want, { saving: true });
+  f.dirty = false;
+  const after = gList();
+  renderGrade();
+  if (next) {
+    // คนถัดไปในลำดับเดิม (ถ้ากรอง "รอตรวจ" คนที่เพิ่งตรวจจะหายไป)
+    let target = null;
+    for (let k = idx + 1; k < before.length; k++) if (after.some(x => x.no === before[k])) { target = before[k]; break; }
+    if (!target && after.length) target = after[0].no;
+    if (target) selectStudent(target, true); else { A.g.cur = null; renderGList(); $('gvMain').innerHTML = '<div class="empty">ตรวจครบทุกคนในรายการนี้แล้ว</div>'; }
+  } else selectStudent(s.no, true);
+  savePending(1);
+  let failed = false;
   try {
-    const r = await run('adminGrade', A.token, s.sub.row, g.taskId, g.room, s.no, f.review, f.review === 'pass' ? f.score : '', f.note);
-    Object.assign(s.sub, { review: r.review, score: r.score, note: r.note });
-    f.dirty = false;
-    toast(`${s.name}: ${{ pass: 'ผ่าน', fail: 'ไม่ผ่าน', pending: 'รอตรวจ' }[r.review]}`);
-    const after = gList();
-    renderGrade();
-    if (next) {
-      // คนถัดไปในลำดับเดิม (ถ้ากรอง "รอตรวจ" คนที่เพิ่งตรวจจะหายไป)
-      let target = null;
-      for (let k = idx + 1; k < before.length; k++) if (after.some(x => x.no === before[k])) { target = before[k]; break; }
-      if (!target && after.length) target = after[0].no;
-      if (target) selectStudent(target, true); else { A.g.cur = null; renderGList(); $('gvMain').innerHTML = '<div class="empty">ตรวจครบทุกคนในรายการนี้แล้ว 🎉</div>'; }
-    } else selectStudent(s.no, true);
-  } catch (e) { toast(errText(e), true); $('gSave1').disabled = $('gSave2').disabled = false; }
+    const r = await run('adminGrade', A.token, s.sub.row, g.taskId, g.room, s.no, want.review, want.score, want.note);
+    Object.assign(s.sub, { review: r.review, score: r.score, note: r.note, saving: false });
+    toast(`บันทึกแล้ว · ${s.name}: ${{ pass: 'ผ่าน', fail: 'ไม่ผ่าน', pending: 'รอตรวจ' }[r.review]}`);
+  } catch (e) {
+    Object.assign(s.sub, prev, { saving: false });
+    failed = true;
+    toast(`บันทึกของ ${s.name} ไม่สำเร็จ: ${errText(e)} · ลองอีกครั้ง`, true);
+  } finally {
+    savePending(-1);
+    if (A.g === g) {
+      renderGrade();
+      if (g.cur === s.no && !(g.form && g.form.dirty)) {
+        selectStudent(s.no, true);
+        if (failed) { g.form = Object.assign({ no: s.no, dirty: true }, want); renderForm(); }   // คงค่าที่กรอกไว้ กดบันทึกซ้ำได้เลย
+      }
+    }
+  }
 }
+/* ตัวนับงานบันทึกที่ยังค้าง: เตือนก่อนปิดหน้า และแสดงสถานะเล็กๆ */
+let SAVING = 0;
+function savePending(d) {
+  SAVING = Math.max(0, SAVING + d);
+  const el = $('saveState'); if (!el) return;
+  el.textContent = SAVING ? `กำลังบันทึก ${SAVING} รายการ…` : 'บันทึกครบแล้ว';
+  el.classList.toggle('busy', !!SAVING);
+  clearTimeout(savePending.t);
+  el.classList.remove('hidden');
+  if (!SAVING) savePending.t = setTimeout(() => el.classList.add('hidden'), 1800);
+}
+window.addEventListener('beforeunload', e => { if (SAVING) { e.preventDefault(); e.returnValue = ''; } });
 
-/* ---- รูป: ดึงผ่าน Apps Script แล้วเก็บแคช ---- */
+/* ---- รูป: เร็วสุดคือภาพย่อจาก Drive โดยตรง (เบราว์เซอร์ที่ล็อกอิน Google บัญชีเดียวกับเจ้าของไฟล์)
+   ถ้าใช้ไม่ได้ ค่อยดึงผ่าน Apps Script ทีละไม่เกิน 4 รูป และเก็บแคชไว้ ---- */
+let THUMB_MODE = (() => { try { return sessionStorage.getItem('thumbMode') || 'try'; } catch (e) { return 'try'; } })();
+function setThumbMode(m) { THUMB_MODE = m; try { sessionStorage.setItem('thumbMode', m); } catch (e) {} }
+function driveThumb(id, w) {
+  return new Promise((res, rej) => {
+    const url = `https://drive.google.com/thumbnail?id=${encodeURIComponent(id)}&sz=w${w}`;
+    const im = new Image(); let done = false;
+    const t = setTimeout(() => { if (!done) { done = true; rej(new Error('timeout')); } }, 7000);
+    im.onload = () => { if (done) return; done = true; clearTimeout(t); im.naturalWidth > 40 ? res(url) : rej(new Error('tiny')); };
+    im.onerror = () => { if (done) return; done = true; clearTimeout(t); rej(new Error('blocked')); };
+    im.referrerPolicy = 'no-referrer'; im.src = url;
+  });
+}
+const RPC_Q = []; let RPC_N = 0;
+function rpcSlot(fn) {
+  return new Promise((res, rej) => { RPC_Q.push({ fn, res, rej }); pumpRpc(); });
+}
+function pumpRpc() {
+  while (RPC_N < 4 && RPC_Q.length) {
+    const j = RPC_Q.shift(); RPC_N++;
+    j.fn().then(j.res, j.rej).finally(() => { RPC_N--; pumpRpc(); });
+  }
+}
+function viaScript(id) {
+  return rpcSlot(() => run('adminFilePreview', A.token, id))
+    .then(r => r.image ? { src: `data:${r.mime};base64,${r.data}`, url: r.url, small: r.small } : { src: null, url: r.url });
+}
 function loadImg(id) {
-  if (!IMG_CACHE[id]) IMG_CACHE[id] = run('adminFilePreview', A.token, id)
-    .then(r => r.image ? { src: `data:${r.mime};base64,${r.data}`, url: r.url, small: r.small } : { src: null, url: r.url })
-    .catch(e => { delete IMG_CACHE[id]; throw e; });
+  if (!IMG_CACHE[id]) {
+    const url = `https://drive.google.com/file/d/${id}/view`;
+    IMG_CACHE[id] = (THUMB_MODE === 'off' ? viaScript(id)
+      : driveThumb(id, 1600).then(src => { setThumbMode('on'); return { src, url, full: `https://drive.google.com/thumbnail?id=${encodeURIComponent(id)}&sz=w2400` }; })
+          .catch(() => { if (THUMB_MODE === 'try') setThumbMode('off'); return viaScript(id); }))
+      .catch(e => { delete IMG_CACHE[id]; throw e; });
+  }
   return IMG_CACHE[id];
 }
 function curImgs() { const s = A.g && A.g.data.students.find(x => x.no === A.g.cur); return s && s.sub ? s.sub.files.filter(f => f.image) : []; }
@@ -1056,16 +1129,15 @@ function loadThumbs() {
 }
 function prefetchNext() {
   const list = gList(), i = list.findIndex(x => x.no === A.g.cur);
-  for (let k = i + 1; k < Math.min(list.length, i + 3); k++) {
-    const s = list[k]; const f = s.sub && s.sub.files.find(x => x.image);
-    if (f) loadImg(f.id).catch(() => {});
+  for (let k = i + 1; k < Math.min(list.length, i + 4); k++) {
+    const s = list[k]; (s.sub ? s.sub.files.filter(x => x.image) : []).forEach(f => loadImg(f.id).catch(() => {}));
   }
 }
 function openLb(k) { A.lb = k; $('lb').classList.remove('hidden', 'zoom'); lbShow(); }
 async function lbShow() {
   const imgs = curImgs(), k = A.lb;
   $('lbPrev').classList.toggle('hidden', imgs.length < 2); $('lbNext').classList.toggle('hidden', imgs.length < 2);
-  try { const r = await loadImg(imgs[k].id); $('lbImg').src = r.src || ''; } catch (e) {}
+  try { const r = await loadImg(imgs[k].id); if (A.lb === k) $('lbImg').src = r.full || r.src || ''; } catch (e) {}
 }
 function lbStep(d) { const n = curImgs().length; A.lb = (A.lb + d + n) % n; $('lb').classList.remove('zoom'); lbShow(); }
 function closeLb() { $('lb').classList.add('hidden'); A.lb = null; }
